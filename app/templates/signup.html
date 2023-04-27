@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Welcome to Ponger{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}Sign Up{% endblock %}
+{% block content %}
+    <div class="container-fluid p-5 d-flex justify-content-center">
+        <form name="signup-form" class="col-4" action="/register" method="post">
+            <!-- Username -->
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="form-outline">
+                        <input name="username" type="text" id="form3Example1" class="form-control" required/>
+                        <label class="form-label" for="form3Example1">Username</label>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Email input -->
+            <div class="form-outline mb-4">
+                <input name="e-mail" onfocusout="checkIfUserExists()" type="email" id="form3Example3" class="form-control" required/>
+                <label class="form-label" for="form3Example3">Email address</label>
+            </div>
+        
+            <!-- Password input -->
+            <div class="form-outline mb-4">
+                <input name="password" type="password" id="form3Example4" class="form-control" required/>
+                <label class="form-label" for="form3Example4">Password</label>
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit" class="btn btn-primary btn-block mb-4">Sign up</button>
+        
+            <!-- Register buttons -->
+            <div class="text-center">
+                <p>or sign up with:</p>
+                <button type="button" class="btn btn-secondary btn-floating mx-1">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+        
+                <button type="button" class="btn btn-secondary btn-floating mx-1">
+                    <i class="fab fa-google"></i>
+                </button>
+        
+                <button type="button" class="btn btn-secondary btn-floating mx-1">
+                    <i class="fab fa-twitter"></i>
+                </button>
+            
+                <button type="button" class="btn btn-secondary btn-floating mx-1">
+                    <i class="fab fa-github"></i>
+                </button>
+                <p>Already a member? <a href="/login">Log in</a></p>
+            </div>
+        </form>
+    </div>
+    <script src="{{ url_for('static', filename='js/validate-users.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+{% endblock %}

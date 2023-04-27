@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Welcome to PingPonger{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}Welcome to PingPonger{% endblock %}
+{% block content %}
+    <div class="container-fluid p-5">
+        <div class="row d-flex justify-content-evenly align-items-center p-5">
+            <div class="card text-center" style="width: 18rem;">
+                <div class="card-body">
+                <h5 class="card-title">Sign Up</h5>
+                <p class="card-text">Join free of charge.</p>
+                <a href="/signup" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                <h5 class="card-title text-center">Start Playing</h5>
+                <p class="card-text">With PingPonger you can keep better track of your score during games, see statistics for your games and find people to play with.</p>
+                <a href="/newmatch" class="btn btn-primary">New Match</a>
+                </div>
+            </div>
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                <h5 class="card-title text-center">Invite Friends to a Match</h5>
+                <p class="card-text">Let your friends know you want to play.</p>
+                <a href="#!" class="btn btn-primary">Invite</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
