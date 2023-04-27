@@ -1,7 +1,11 @@
 from app import app, db
 from flask import render_template, request, redirect, url_for, jsonify, session, flash
+from app.models import User, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from app.models import User
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 @app.route('/')
 def index():
@@ -44,7 +48,10 @@ def signin():
         flash("There is no account with this e-mail.")
         return redirect(url_for('login'))
     if user.check_password(form['password']):
-        session['user'] = user.email
+        if form['remember-me']:
+            login_user(user, remember=True)
+        else:
+            login_user(user)
         return user.username + ", you are successfully logged in."
     else:
         flash("Wrong password. Try again.")
@@ -52,7 +59,7 @@ def signin():
 
 @app.route('/logout', methods=["POST", "GET"])
 def logout():
-    session.pop('user', None)
+    logout_user()
     return "You are now logged out."
 
 @app.route('/match')
