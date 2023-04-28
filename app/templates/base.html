@@ -35,7 +35,12 @@
                         <a class="nav-link active" href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Profile</a>
+                        <a name="profile-login" class="nav-link" href="#">Log In</a>
+                        <script>
+                            if (current_user.is_authenticated) {
+                                document.links['profile-login'].innerHTML = "a dela"
+                            }
+                        </script>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-secondary" href="#">All games</a>

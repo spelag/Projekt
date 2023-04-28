@@ -69,3 +69,8 @@ def match():
 @app.route('/newmatch')
 def newMatch():
     return render_template('newmatch.html')
+
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html')
