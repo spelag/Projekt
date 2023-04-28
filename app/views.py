@@ -30,7 +30,8 @@ def register():
     user.set_password(form['password'])
     db.session.add(user)
     db.session.commit()
-    return redirect(url_for('login'))
+    login_user(user, remember=False)
+    return redirect(url_for('index'))
 
 @app.route('/register-validation', methods=["POST"])
 def registerValidation():
@@ -86,3 +87,9 @@ def editProfile():
     current_user.experience = info['experience']
     db.session.commit()
     return redirect(url_for('profile'))
+
+@app.route('/allusers')
+def allusers():
+    userCount = db.session.query(User).count()
+    allUsers = db.session.query(User)
+    return render_template('allusers.html', userCount=userCount, allUsers=allUsers)
