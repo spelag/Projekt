@@ -2,6 +2,7 @@ from app import app, db
 from flask import render_template, request, redirect, url_for, jsonify, session, flash
 from app.models import User, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from sqlalchemy import text, update
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -73,4 +74,15 @@ def newMatch():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    return render_template('profileSettings.html')
+
+@app.route('/editprofile', methods=["GET", "POST"])
+def editProfile():
+    if request.method == "GET":
+        return render_template('editProfile.html')
+    info = request.form
+    current_user.age_group = info['age']
+    current_user.location = info['location']
+    current_user.experience = info['experience']
+    db.session.commit()
+    return redirect(url_for('profile'))

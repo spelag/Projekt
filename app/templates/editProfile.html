@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}Profile{% endblock %}
+{% block content %}
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-body text-center">
+                            <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp" alt="avatar"
+                                class="rounded-circle img-fluid" style="width: 150px;">
+                            <h5 class="my-3">{{current_user.username}}</h5>
+                            <p class="text-muted mb-1">User since:</p>
+                            <p class="text-muted mb-4">{{current_user.join_date.day}}. {{current_user.join_date.month}}. {{current_user.join_date.year}}</p>
+                            <div class="d-flex justify-content-center mb-2">
+                                <button type="submit" form="settings" class="btn btn-danger">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <form class="col-lg-8" id="settings" action="/editprofile" method="post">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Username</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0">{{current_user.username}}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                <p class="mb-0">Email</p>
+                                </div>
+                                <div class="col-sm-9">
+                                <p class="text-muted mb-0">{{current_user.email}}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Age group</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted my-0">
+                                        <div class="form-group">
+                                            <select name="age" class="form-control">
+                                                <option>None</option>
+                                                <option>13-19</option>
+                                                <option>20-29</option>
+                                                <option>30-49</option>
+                                                <option>50-59</option>
+                                                <option>60-69</option>
+                                                <option>70-79</option>
+                                                <option>80-89</option>
+                                                <option>90-99</option>
+                                                <option>100+</option>
+                                            </select>
+                                        </div>
+                                    </p>
+                                </div>
+                            </div>
+                            <hr class="mt-0">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Location</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0">
+                                        <input name="location" class="form-control"/>
+                                    </p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Experience</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0">
+                                        <div class="form-group">
+                                            <select name="experience" class="form-control">
+                                                <option>None</option>
+                                                <option>Beginner</option>
+                                                <option>Intermediate</option>
+                                                <option>Advanced</option>
+                                                <option>Professional</option>
+                                            </select>
+                                        </div>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning" role="alert" data-mdb-color="warning">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        Any information you enter will be available publicly on your profile.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
