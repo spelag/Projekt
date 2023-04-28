@@ -1,2 +1,9 @@
-hello
-<a href="/logout">log out</a>
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}Profile{% endblock %}
+{% block content %}
+    <a href="/logout">log out</a>
+{% endblock %}

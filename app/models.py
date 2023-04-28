@@ -12,6 +12,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
+    join_date = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
