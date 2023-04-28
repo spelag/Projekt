@@ -48,11 +48,11 @@ def signin():
         flash("There is no account with this e-mail.")
         return redirect(url_for('login'))
     if user.check_password(form['password']):
-        if form['remember-me']:
-            login_user(user, remember=True)
+        if len(form) == 2:
+            login_user(user, remember=False)
         else:
-            login_user(user)
-        return user.username + ", you are successfully logged in."
+            login_user(user, remember=True)
+        return redirect(url_for('index'))
     else:
         flash("Wrong password. Try again.")
         return redirect(url_for('login'))
@@ -60,7 +60,7 @@ def signin():
 @app.route('/logout', methods=["POST", "GET"])
 def logout():
     logout_user()
-    return "You are now logged out."
+    return redirect(url_for('index'))
 
 @app.route('/match')
 def match():
