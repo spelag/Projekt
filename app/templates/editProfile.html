@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Profile{% endblock %}
+{% block title %}Edit{% endblock %}
 {% block head %}
     {{ super() }}
 {% endblock %}
-{% block pagetitle %}Profile{% endblock %}
-{% block content %}
+{% block pagetitle %}Edit Profile{% endblock %}
+{% block content %}  
     <section style="background-color: #eee;">
         <div class="container py-5">
             <div class="row">
@@ -13,6 +13,9 @@
                         <div class="card-body text-center">
                             <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp" alt="avatar"
                                 class="rounded-circle img-fluid" style="width: 150px;">
+                            <div class="d-flex justify-content-center mb-3">
+                                <input class="form-control form-control-sm w-50" form="settings" type="file">
+                            </div>
                             <h5 class="my-3">{{current_user.username}}</h5>
                             <p class="text-muted mb-1">User since:</p>
                             <p class="text-muted mb-4">{{current_user.join_date.day}}. {{current_user.join_date.month}}. {{current_user.join_date.year}}</p>
@@ -100,7 +103,7 @@
                     </div>
                     <div class="alert alert-warning" role="alert" data-mdb-color="warning">
                         <i class="fa fa-exclamation-triangle"></i>
-                        Any information you enter will be available publicly on your profile.
+                        Any information you enter will be publicly available on your profile.
                     </div>
                 </div>
             </div>

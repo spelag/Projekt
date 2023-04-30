@@ -17,6 +17,9 @@ class User(db.Model, UserMixin):
     age_group = db.Column(db.String(6))
     location = db.Column(db.String(120))
 
+    friends = db.relationship('Friend', backref='user', lazy=True)
+    requests = db.relationship('FriendRequest', backref='user', lazy=True)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     
@@ -31,6 +34,15 @@ class User(db.Model, UserMixin):
 #     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.id'))
 #     vaccine_doses = db.relationship('Vaccine_Dose', backref='patient')
 
+class Friend(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    friendID = db.Column(db.Integer, nullable=False)
+    friendOG = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+class FriendRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    requester = db.Column(db.Integer, nullable=False)
+    requested = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 class Match(db.Model):
     id= db.Column(db.Integer, primary_key=True)
