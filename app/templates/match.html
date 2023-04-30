@@ -3,7 +3,37 @@
 {% block head %}
     {{ super() }}
 {% endblock %}
-{% block pagetitle %}Match{% endblock %}
+{% block pagetitle %}{{u1.username}} vs {{u2.username}}{% endblock %}
 {% block content %}
-
+<div class="container-fluid">
+	<div class="row p-5">
+		<div class="col-md-12 text-center">
+            <h4>idk some info</h4>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-3 text-end">
+            <img src="/static/img/lopar.png" alt="Pingpong racket: Your turn">
+		</div>
+		<div class="col-md-3">
+            <h1 class="text-end">{{u1.username}}:</h1>
+            <h1 class="text-end">score</h1>
+		</div>
+		<div class="col-md-3">
+            <h1 class="text-beginning">{{u2.username}}:</h1>
+            <h1 class="text-beginning">score2</h1>
+		</div>
+		<div class="col-md-3">
+            <img src="/static/img/lopar.png" alt="Pingpong racket: Your turn">
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">
+		</div>
+		<div class="col-md-4">
+		</div>
+		<div class="col-md-4">
+		</div>
+	</div>
+</div>
 {% endblock %}

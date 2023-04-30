@@ -21,7 +21,7 @@
                                     {% if loggedin %}
                                         {% if friend %}
                                             <a type="button" class="btn btn-danger" href="{{url_for('removeFriend', friendName=user.username, friendID=user.id)}}">Remove Friend</a>
-                                            <a type="button" class="btn btn-outline-primary ms-1" href="{{url_for('friendRequest', friendName=user.username, friendID=user.id)}}">Invite to a Match</a>
+                                            <a type="button" class="btn btn-outline-primary ms-1" href="{{url_for('newMatch', opponent=user.id)}}">Invite to a Match</a>
                                         {% elif request %}
                                             <a type="button" class="btn btn-success" href="{{url_for('addFriend', friendName=user.username, friendID=user.id)}}">Accept Friend Request</a>
                                         {% elif impending %}

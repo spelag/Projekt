@@ -64,13 +64,16 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@app.route('/match')
-def match():
-    return render_template('match.html')
+@app.route('/match/<u1u2>')
+def match(u1u2):
+    u1 = User.query.filter_by(id=int(u1u2)-current_user.id).first()
+    u2 = current_user
+    return render_template('match.html', u1=u1, u2=u2)
 
-@app.route('/newmatch')
-def newMatch():
-    return render_template('newmatch.html')
+@app.route('/newmatch/<opponent>')
+def newMatch(opponent):
+    opponent = User.query.filter_by(id=opponent).first()
+    return render_template('matchSettings.html', opponent=opponent)
 
 @app.route('/profile/<username>/<userID>')
 def profile(username, userID):
