@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Invitations{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}All Invitations{% endblock %}
+{% block content %}
+    <div class="container-fluid p-3">
+        <div class="row d-flex justify-content-evenly">
+            <div class="col-md-5 text-center">
+                <h3>Inbound Invitations</h3>
+            </div>
+            <div class="col-md-5 text-center">
+                <h3>Outbound Invitations</h3>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid p-3">
+        <div class="row d-flex justify-content-evenly">
+            <div class="col-md-5 text-center">
+                <table class="table table-striped table-hover">
+                    {% if invitesLen > 0 %}
+                        {% for i in range(invitesLen) %}
+                            <tr>
+                                <th scope="row">{{User.query.filter_by(id=current_user.invites[i].inviter).first().username}}</th>
+                                <td class="text-end">
+                                    <a class="btn btn-success" href="{{url_for('match', matchID=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().id, unique=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().unique)}}">Accept</a>
+                                    <a class="btn btn-danger" href="{{url_for('declineInvite', invite=current_user.invites[i].id)}}">Decline</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><th>No invitations.</th></tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="col-md-5 text-center">
+                <table class="table table-striped table-hover">
+                {% if invitedLen > 0 %}
+                    {% for i in range(invitedLen) %}
+                        <tr>
+                        
+                            <th scope="row">{{User.query.filter_by(id=current_user.outboundInvites[i].invitee).first().username}}</th>
+                            <td class="text-end">
+                                <a class="btn btn-success" href="{{url_for('match', matchID=current_user.outboundInvites[i].id, unique=current_user.outboundInvites[i].unique)}}">Join</a>
+                                <a class="btn btn-danger" href="{{url_for('declineInvite', invite=current_user.outboundInvites[i].invite)}}">Cancel</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr><th>No pending invitations.</th></tr>
+                {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

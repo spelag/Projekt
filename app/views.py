@@ -1,8 +1,12 @@
-from app import app, db
+from app import app, db, socketio
 from flask import render_template, request, redirect, url_for, jsonify, session, flash
-from app.models import User, FriendRequest, Friend, login_manager
+from app.models import User, FriendRequest, Friend, Match, Invites, Wins, Losses, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from sqlalchemy import text, update
+import random
+from string import ascii_letters
+from flask_socketio import join_room, leave_room, send, emit
+from datetime import datetime
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -64,16 +68,112 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@app.route('/match/<u1u2>')
-def match(u1u2):
-    u1 = User.query.filter_by(id=int(u1u2)-current_user.id).first()
-    u2 = current_user
-    return render_template('match.html', u1=u1, u2=u2)
+def generate_unique_code(length):
+    while True:
+        code = ""
+        for i in range(length):
+            code += random.choice(ascii_letters)
+        if code not in matches:
+            break
+    return code
+
+matches = []
+
+@app.route('/match/<matchID>/<unique>')
+def match(matchID, unique):
+    u1 = Match.query.filter_by(id=matchID).first().invitee
+    u2 = Match.query.filter_by(id=matchID).first().inviter
+    u1 = User.query.filter_by(id=u1).first()
+    u2 = User.query.filter_by(id=u2).first()
+    if current_user.id != u1.id and current_user.id != u2.id:
+        return redirect(url_for('index'))
+    return render_template('match.html', u1=u1, u2=u2, unique=unique, u1Score=0, u2Score=0, matchID=matchID)
+
+@socketio.on('score')
+def score(data):
+    serva = data["serva"]
+    turn = data["turn"]
+    if data["what"] == "plus":
+        data[data["who"]] += 1
+        serva += 1
+    else:
+        data[data["who"]] -= 1
+        if serva != 0:
+            serva -= 1
+    if data[data["who"]] == 11:
+        emit('gameOver', {"winner":data["who"]}, room=data["room"])
+    else:
+        if serva%4 == 0:
+            turn = data["starter"]
+        elif serva%2 == 0:
+            turn = data["notstarter"]
+        elif serva%4 == 1:
+            turn = data["starter"]
+        elif serva%4 == 3:
+            turn = data["notstarter"]
+        if data[data["who"]] >= 0:
+            emit('score', {"turn":turn, "serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
+
+readyUsers = []
+
+@socketio.on('start')
+def start(data):
+    if not (data['user'] in readyUsers):
+        readyUsers.append(data['user'])
+        emit('start', {"user":data['user'], "ready": False}, room=data['matchID'])
+    if len(readyUsers) == 2:
+        Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now
+        emit('start', {"user":data['user'], "ready": True, "starter":str(random.choice([1,2]))}, room=data['matchID'])
+
+@socketio.on('join')
+def join(data):
+    join_room(data['room'])
+
+@socketio.on('leave')
+def leave(data):
+    leave_room(data['room'])
 
 @app.route('/newmatch/<opponent>')
 def newMatch(opponent):
     opponent = User.query.filter_by(id=opponent).first()
-    return render_template('matchSettings.html', opponent=opponent)
+    if Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first():
+        flash("You already invited this user for a match.")
+        return redirect(url_for('profile', username=opponent.username, userID=opponent.id))
+    unique = generate_unique_code(10)
+    invite = Invites(
+        inviter = current_user.id,
+        invitee = opponent.id
+    )
+    db.session.add(invite)
+    db.session.commit()
+    match = Match(
+        unique = unique,
+        inviter = current_user.id,
+        invitee = opponent.id,
+        invite = invite.id
+    )
+    db.session.add(match)
+    db.session.commit()
+    matches.append(match.id)
+    return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
+
+@app.route('/match/<matchID>/<unique>/chat')
+def chat(matchID, unique):
+    u2 = Match.query.filter_by(id=matchID).first().invitee
+    return render_template('chat.html', u2=u2)
+
+@app.route('/invites')
+def invites():
+    return render_template('invites.html', invitesLen=len(current_user.invites), invitedLen=len(current_user.outboundInvites), User=User, Match=Match)
+
+@app.route('/decline/<invite>')
+def declineInvite(invite):
+    match = Match.query.filter_by(invite=invite).first()
+    invite = Invites.query.filter_by(id=invite).first()
+    db.session.delete(invite)
+    db.session.delete(match)
+    db.session.commit()
+    return redirect(url_for('invites'))
 
 @app.route('/profile/<username>/<userID>')
 def profile(username, userID):
