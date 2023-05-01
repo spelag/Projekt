@@ -21,6 +21,12 @@
             document.querySelector('#u2score').innerHTML = 0
             document.querySelector('#u1scoreSet').innerHTML = 0
             document.querySelector('#u2scoreSet').innerHTML = 0
+            document.querySelector('#addU1').style.display = "block"
+            document.querySelector('#addU2').style.display = "block"
+            document.querySelector('#subtractU1').style.display = "block"
+            document.querySelector('#subtractU2').style.display = "block"
+            document.querySelector('#gumb').style.display = "none"
+            document.querySelector('#chat').style.display = "none"
             starter = data.starter
             document.querySelector('#turn'+starter).style.visibility = "visible"
             turn = starter
