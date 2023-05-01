@@ -14,7 +14,9 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('main.html')
+    if current_user.is_authenticated:
+        return render_template('loggedinHomepage.html')
+    return render_template('homepage.html')
 
 @app.route('/login')
 def login():
