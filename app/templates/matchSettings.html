@@ -5,29 +5,16 @@
 {% endblock %}
 {% block pagetitle %}Select the settings for your match{% endblock %}
 {% block content %}
-    <div class="container-fluid">
-        <div class="row text-center">
-            <div class="col-md-4">
-                <h4>Playing against: {{opponent.username}}</h4>
+    <div class="container p-5">
+        <div class="row d-flex justify-content-evenly">
+            <div class="col-md text-center">
+                <h4>A match invite has been successfully sent to {{opponent.username}}.</h4>
+                <a href="/">Send out an e-mail notifying {{opponent.username}} of the invite.</a>
             </div>
         </div>
-        <div class="row d-flex justify-content-center">
-            <div class="col-md-4 text-center">
-                <h4>Settings</h4>
-                <p>Change sets.</p>
-                <div class="dropdown d-flex justify-content-center">
-                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-                        Action
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item disabled" href="#">Action</a> <a class="dropdown-item" href="#">Another action</a> <a class="dropdown-item" href="#">Something else here</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row d-flex justify-content-center p-2">
-            <div class="col-md-4 d-flex justify-content-center">
-                <a class="btn btn-primary" href="{{url_for('match', matchID=matchID, unique=unique)}}">Save</a>
+        <div class="row text-center p-3">
+            <div class="col-md text-center">
+                <a class="btn btn-primary" id="chat" href="{{url_for('chat', matchID=matchID, unique=unique)}}">Chat</a>
             </div>
         </div>
     </div>

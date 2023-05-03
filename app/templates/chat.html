@@ -4,21 +4,42 @@
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
 {% endblock %}
-{% block pagetitle %}Chatting with {{u2}}{% endblock %}
+{% block pagetitle %}
+    {% if u1 == current_user %}
+        Chatting with {{u2.username}}
+    {% else %}
+        Chatting with {{u1.username}}
+    {% endif %}
+{% endblock %}
 {% block content %}
-<div class="message-box">
-    <h2>Chat Room: {{code}}</h2>
-    <div class="messages" id="messages"></div>
-    <div class="inputs">
-        <input
-            type="text"
-            rows="3"
-            placeholder="Message"
-            name="message"
-            id="message"
-        />
-        <button class="btn btn-secondary" name="send" id="send-btn" onClick="sendMessage()">Send</button>
+<div class="container pt-4">
+    <div class="row">
+        <div class="col-md text-center">
+            <a class="btn btn-primary" href="{{url_for('match', matchID=matchID, unique=unique)}}">Proceed to the Match</a>
+            <a class="btn btn-danger" href="{{url_for('declineInvite', invite=Match.query.filter_by(id=matchID).first().invite)}}">Cancel Match</a>
+        </div>
+    </div>
+    <div class="row d-flex justify-content-center">
+        <div class="message-box">
+            <div class="messages" id="messages"><div id="el"></div></div>
+            <div class="inputs">
+                <input
+                    type="text"
+                    rows="3"
+                    placeholder="Message"
+                    name="message"
+                    id="message"
+                    autofocus
+                />
+                <button class="btn btn-secondary" name="send" id="send-btn">Send</button>
+            </div>
+        </div>        
     </div>
 </div>
-
+<script>
+    const current_user = `{{current_user.username}}`;
+    const matchID = `{{matchID}}`;
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

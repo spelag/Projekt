@@ -5,13 +5,8 @@
 {% endblock %}
 {% block pagetitle %}{{u1.username}} vs {{u2.username}}{% endblock %}
 {% block content %}
-<div class="container-fluid">
-	<div class="row p-5">
-		<div class="col-md-12 text-center">
-            <h4 id="isactive"></h4>
-		</div>
-	</div>
-	<div class="row">
+<div class="container-fluid p-3">
+	<div id="gameview" class="row">
 		<div class="col-md-3 text-end">
             <img id="turn1" src="/static/img/lopar.png" alt="Pingpong racket: Your turn" style="visibility: hidden;">
 		</div>
@@ -38,14 +33,21 @@
             <img id="turn2" src="/static/img/lopar.png" alt="Pingpong racket: Your turn" style="visibility: hidden;">
 		</div>
 	</div>
-	<div class="row">
-		<div class="col-md-4">
+	<div class="row d-flex justify-content-evenly"></div>
+		<div id="settingsi" class="col-md text-center">
+			<h4>Settings</h4>
+			<p>Change the number of sets you will play.</p>
+			<div class="dropdown d-flex justify-content-center">
+				<select onchange="seti()" id="seti" class="form-control w-50 text-center">
+					<option>3</option>
+					<option>5</option>
+				</select>
+			</div>
 		</div>
-		<div class="col-md-4" id="spodiMiddle">
-			<button class="btn btn-primary" id="gumb">Start</button>
-		</div>
-		<div class="col-md-4">
-            <a class="btn btn-primary" id="chat" href="{{url_for('chat', matchID=matchID, unique=unique)}}">Chat</a>
+	</div>
+	<div class="row d-flex justify-content-evenly">
+		<div class="col-md-4 text-center" id="spodiMiddle">
+			<button class="btn btn-primary" id="gumb">Ready</button>
 		</div>
 	</div>
 </div>
@@ -57,4 +59,10 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js/socketio.js') }}"></script>
+<script>
+	function seti() {
+		var x = document.getElementById("seti").value;
+		console.log(x)
+	}
+</script>
 {% endblock %}

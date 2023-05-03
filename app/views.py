@@ -116,16 +116,17 @@ def score(data):
         if data[data["who"]] >= 0:
             emit('score', {"turn":turn, "serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
 
-readyUsers = []
+readyUsers = {}
 
 @socketio.on('start')
 def start(data):
-    if not (data['user'] in readyUsers):
-        readyUsers.append(data['user'])
-        emit('start', {"user":data['user'], "ready": False}, room=data['matchID'])
-    if len(readyUsers) == 2:
+    if str(data['matchID']) in readyUsers:
         Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now
+        readyUsers[data["matchID"]].append(data['user'])
         emit('start', {"user":data['user'], "ready": True, "starter":str(random.choice([1,2]))}, room=data['matchID'])
+    readyUsers[data["matchID"]] = []
+    readyUsers[data["matchID"]].append(data['user'])
+    emit('start', {"user":data['user'], "ready": False}, room=data['matchID'])
 
 @socketio.on('join')
 def join(data):
@@ -138,31 +139,53 @@ def leave(data):
 @app.route('/newmatch/<opponent>')
 def newMatch(opponent):
     opponent = User.query.filter_by(id=opponent).first()
-    if Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first():
-        flash("You already invited this user for a match.")
-        return redirect(url_for('profile', username=opponent.username, userID=opponent.id))
-    unique = generate_unique_code(10)
-    invite = Invites(
-        inviter = current_user.id,
-        invitee = opponent.id
-    )
-    db.session.add(invite)
-    db.session.commit()
-    match = Match(
-        unique = unique,
-        inviter = current_user.id,
-        invitee = opponent.id,
-        invite = invite.id
-    )
-    db.session.add(match)
-    db.session.commit()
-    matches.append(match.id)
+    m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
+    if not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2:
+        unique = generate_unique_code(10)
+        invite = Invites(
+            inviter = current_user.id,
+            invitee = opponent.id
+        )
+        db.session.add(invite)
+        db.session.commit()
+        match = Match(
+            unique = unique,
+            inviter = current_user.id,
+            invitee = opponent.id,
+            invite = invite.id
+        )
+        db.session.add(match)
+        db.session.commit()
+        matches.append(match.id)
+    elif m2:
+        match = m2
+        unique = match.unique        
+    else:
+        match = Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first()
+        unique = match.unique
     return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
+
+chats = {}
 
 @app.route('/match/<matchID>/<unique>/chat')
 def chat(matchID, unique):
-    u2 = Match.query.filter_by(id=matchID).first().invitee
-    return render_template('chat.html', u2=u2)
+    u1 = User.query.filter_by(id=Match.query.filter_by(id=matchID).first().invitee).first()
+    u2 = User.query.filter_by(id=Match.query.filter_by(id=matchID).first().inviter).first()
+    return render_template('chat.html', u1=u1, u2=u2, matchID=matchID, Match=Match, unique=unique)
+
+@socketio.on('joinChat')
+def join(data):
+    join_room(data['room'])
+    send({"name": data["name"], "message": "has entered the chat"}, to=data["room"])
+
+@socketio.on('leaveChat')
+def leave(data):
+    leave_room(data['room'])
+    send({"name": data["name"], "message": "has left the chat"}, to=data["room"])
+
+@socketio.on("message")
+def message(data):
+    send({"name": data["who"], "message": data["message"]}, to=data["room"])
 
 @app.route('/invites')
 def invites():

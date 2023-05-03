@@ -1,8 +1,6 @@
  document.addEventListener('DOMContentLoaded', () => {
     var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
 
-    var readyUsers;
-
     socket.on('connect', () => {
         socket.emit('join', {"room": matchID})
     });
@@ -26,7 +24,7 @@
             document.querySelector('#subtractU1').style.display = "block"
             document.querySelector('#subtractU2').style.display = "block"
             document.querySelector('#gumb').style.display = "none"
-            document.querySelector('#chat').style.display = "none"
+            document.querySelector('#settingsi').style.display = "none"
             starter = data.starter
             document.querySelector('#turn'+starter).style.visibility = "visible"
             turn = starter
