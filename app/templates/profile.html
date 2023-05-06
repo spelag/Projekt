@@ -24,6 +24,7 @@
                                             <a type="button" class="btn btn-outline-primary ms-1" href="{{url_for('newMatch', opponent=user.id)}}">Invite to a Match</a>
                                         {% elif request %}
                                             <a type="button" class="btn btn-success" href="{{url_for('addFriend', friendName=user.username, friendID=user.id)}}">Accept Friend Request</a>
+                                            <a type="button" class="btn btn-danger" href="{{url_for('removeRequest', friendID=user.id)}}">Decline Friend Request</a>
                                         {% elif impending %}
                                             <a type="button" class="btn btn-warning">Pending Friend Request</a>
                                         {% else %}

@@ -6,6 +6,7 @@
 {% block pagetitle %}{{u1.username}} vs {{u2.username}}{% endblock %}
 {% block content %}
 <div class="container-fluid p-3">
+	<div class="row text-center" id="top" style="display: none;"></div>
 	<div id="gameview" class="row">
 		<div class="col-md-3 text-end">
             <img id="turn1" src="/static/img/lopar.png" alt="Pingpong racket: Your turn" style="visibility: hidden;">
@@ -19,6 +20,10 @@
 				<button class="btn btn-primary" style="display: none;" id="addU1" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractU1" type="button">-</button>
 			</div>
+			<div class="d-flex justify-content-end">
+				<button class="btn btn-primary" style="display: none;" id="addsetU1" type="button">+</button>
+				<button class="btn btn-primary" style="display: none;" id="subtractsetU1" type="button">-</button>
+			</div>
 		</div>
 		<div class="col-md-3 text-beginning">
             <h1 id="u2">{{u2.username}}</h1>
@@ -27,6 +32,10 @@
 			<div class="d-flex justify-content-beginning">
 				<button class="btn btn-primary" style="display: none;" id="addU2" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractU2" type="button">-</button>
+			</div>
+			<div class="d-flex justify-content-beginning">
+				<button class="btn btn-primary" style="display: none;" id="addsetU2" type="button">+</button>
+				<button class="btn btn-primary" style="display: none;" id="subtractsetU2" type="button">-</button>
 			</div>
 		</div>
 		<div class="col-md-3">
@@ -38,11 +47,15 @@
 			<h4>Settings</h4>
 			<p>Change the number of sets you will play.</p>
 			<div class="dropdown d-flex justify-content-center">
-				<select onchange="seti()" id="seti" class="form-control w-50 text-center">
-					<option>3</option>
-					<option>5</option>
+				<select id="seti" class="form-control w-50 text-center">
+					<option value="3">3</option>
+					<option value="5">5</option>
 				</select>
 			</div>
+		</div>
+		<div id="confirm" style="display: none;" class="col-md text-center">
+			<a class='btn btn-success' href="{{url_for('save', matchID=matchID)}}">Confirm results</a>
+			<a class='btn btn-danger' id="declineConfirm">Cancel</a>
 		</div>
 	</div>
 	<div class="row d-flex justify-content-evenly">
@@ -59,10 +72,4 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js/socketio.js') }}"></script>
-<script>
-	function seti() {
-		var x = document.getElementById("seti").value;
-		console.log(x)
-	}
-</script>
 {% endblock %}

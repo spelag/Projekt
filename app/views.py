@@ -103,7 +103,8 @@ def score(data):
         if serva != 0:
             serva -= 1
     if data[data["who"]] == 11:
-        emit('gameOver', {"winner":data["who"]}, room=data["room"])
+        serva = 0
+        emit('gameOver', {"winner":data["who"], "serva":serva}, room=data["room"])
     else:
         if serva%4 == 0:
             turn = data["starter"]
@@ -116,6 +117,16 @@ def score(data):
         if data[data["who"]] >= 0:
             emit('score', {"turn":turn, "serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
 
+@socketio.on('setAdjust')
+def setAdjust(data):
+    serva = 0
+    if data["what"] == "plus":
+        emit('gameOver', {"serva":serva, "winner":data["who"]}, room=data["room"])
+    else:
+        data[data["who"]] -= 1
+        if data[data["who"]] >= 0:
+            emit('setiMinus', {"serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
+
 readyUsers = {}
 
 @socketio.on('start')
@@ -124,9 +135,14 @@ def start(data):
         Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now
         readyUsers[data["matchID"]].append(data['user'])
         emit('start', {"user":data['user'], "ready": True, "starter":str(random.choice([1,2]))}, room=data['matchID'])
-    readyUsers[data["matchID"]] = []
-    readyUsers[data["matchID"]].append(data['user'])
-    emit('start', {"user":data['user'], "ready": False}, room=data['matchID'])
+    else:
+        readyUsers[data["matchID"]] = []
+        readyUsers[data["matchID"]].append(data['user'])
+        emit('start', {"user":data['user'], "ready": False}, room=data['matchID'])
+
+@socketio.on('setiChange')
+def setiChange(data):
+    emit('setiChange', data, room=data['matchID'])
 
 @socketio.on('join')
 def join(data):
@@ -135,6 +151,10 @@ def join(data):
 @socketio.on('leave')
 def leave(data):
     leave_room(data['room'])
+
+@socketio.on('changeResult')
+def changeResult(data):
+    emit('changeResult', room=data["matchID"])
 
 @app.route('/newmatch/<opponent>')
 def newMatch(opponent):
@@ -157,13 +177,22 @@ def newMatch(opponent):
         db.session.add(match)
         db.session.commit()
         matches.append(match.id)
+        return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
     elif m2:
         match = m2
         unique = match.unique        
     else:
         match = Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first()
         unique = match.unique
-    return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
+    return redirect(url_for('chat', matchID=match.id, unique=unique))
+
+@app.route('/match/save/<matchID>')
+def save(matchID):
+    return redirect(url_for('pastmatches'))
+
+@app.route('/pastmatches')
+def pastmatches():
+    return render_template('pastmatches.html')
 
 chats = {}
 
@@ -250,14 +279,18 @@ def allusers(who):
         allUsers = db.session.query(User)
         userCount = allUsers.count()
         btnA = "primary"
-    return render_template('allusers.html', userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR)
+    return render_template('allusers.html', userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR, Friend=Friend, FriendRequest=FriendRequest)
 
 @app.route('/addfriend/<friendName>/<friendID>')
 def addFriend(friendName, friendID):
     friend = Friend.query.filter_by(friendOG=current_user.id, friendID=friendID).first()
+    if FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first():
+        db.session.delete(FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first())
+    else:
+        db.session.delete(FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first())
     if friend:
         flash("You are already friends with this user.")
-        return redirect(url_for('allusers'))
+        return redirect(url_for('allusers', who="friends"))
     friend = Friend(
         friendID = current_user.id,
         friendOG = friendID)
@@ -266,10 +299,6 @@ def addFriend(friendName, friendID):
         friendOG = current_user.id,
         friendID = friendID)
     db.session.add(friend)
-    if FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first():
-        db.session.delete(FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first())
-    else:
-        db.session.delete(FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first())
     db.session.commit()
     return redirect(url_for('profile', username=friendName, userID=friendID))
 
@@ -280,16 +309,25 @@ def removeFriend(friendName, friendID):
     db.session.commit()
     return redirect(url_for('profile', username=friendName, userID=friendID))
 
+@app.route('/removerequest/<friendID>')
+def removeRequest(friendID):
+    if FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first():
+        db.session.delete(FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first())
+    else:
+        db.session.delete(FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first())
+    db.session.commit()
+    return redirect(url_for('allusers', who="friendrequests"))
+
 @app.route('/friendrequest/<friendName>/<friendID>')
 @login_required
 def friendRequest(friendName, friendID):
     request = FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first()
     if request:
         flash("A friend request has already been sent.")
-        return redirect(url_for('allusers'))
+        return redirect(url_for('allusers', who="all"))
     friendRequest = FriendRequest(
         requester = current_user.id,
         requested = friendID)
     db.session.add(friendRequest)
     db.session.commit()
-    return redirect(url_for('profile', username=friendName, userID=friendID))
+    return redirect(url_for('allusers', who="all"))
