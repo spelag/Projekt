@@ -67,4 +67,5 @@ class Match(db.Model):
     winnerPoints = db.Column(db.String(10))
     loserPoints = db.Column(db.String(10))
     sets = db.Column(db.Integer)
+    setResults = db.Column(db.String(30))
     matchDate = db.Column(db.DateTime(timezone=True))

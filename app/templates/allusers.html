@@ -16,7 +16,7 @@
         {% if userCount == 0 and btnF == "primary" %}
             <div class="text-center">
                 <h3>You haven't added any friends yet.</h3>
-                <a class="btn btn-warning" href="/members/all">Find some friends.</a>
+                <a class="btn btn-warning" href="/members/friend">Find some friends</a>
             </div>
         {% elif userCount == 0 and btnR == "primary" %}
             <div class="text-center">
@@ -34,14 +34,6 @@
                         <th scope="col">Location</th>
                         <th scope="col">Joined</th>
                         <th scope="col">Profile</th>
-                        {% if btnF == "primary" %}
-                            <th scope="col">Invite to a Match</th>
-                        {% elif btnA == "primary" %}
-                            <th scope="col">Send a Friend Request</th>
-                        {% else %}
-                            <th scope="col">Accept</th>
-                            <th scope="col">Decline</th>
-                        {% endif %}
                     </tr>
                     </thead>
                     <tbody>

@@ -2,3 +2,24 @@ div {
     text-align: justify;
     text-justify: inter-word;
   }
+
+.points__versus {
+  font-size: min(10vw, 20vh);
+  font-weight: 100;
+  z-index: 400;
+}
+
+.points__team {
+  position: relative;
+  animation-delay: 0;
+  animation-direction: normal;
+  animation-duration: 750ms;
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+  text-shadow: 0 0 32px rgb(0 0 0), 0 0 96px rgb(0 0 0);
+  transition-delay: 150ms;
+  transition-duration: 50ms;
+  transition-property: color, text-shadow;
+  z-index: 300;
+}

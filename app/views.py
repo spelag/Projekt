@@ -22,9 +22,11 @@ def index():
 def login():
     return render_template('login.html')
 
-@app.route('/signup')
+@app.route('/signup', methods=["GET", "POST"])
 def signup():
-    return render_template('signup.html')
+    if request.method == "GET":
+        return render_template('signup.html', mail="")
+    return render_template('signup.html', mail=request.form["emailAddress"])
 
 @app.route('/register', methods=["POST"])
 def register():
@@ -65,7 +67,7 @@ def signin():
         flash("Wrong password. Try again.")
         return redirect(url_for('login'))
 
-@app.route('/logout', methods=["POST", "GET"])
+@app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('index'))
@@ -135,6 +137,7 @@ def start(data):
         Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now
         readyUsers[data["matchID"]].append(data['user'])
         emit('start', {"user":data['user'], "ready": True, "starter":str(random.choice([1,2]))}, room=data['matchID'])
+        # if user already in ready users?????
     else:
         readyUsers[data["matchID"]] = []
         readyUsers[data["matchID"]].append(data['user'])
@@ -142,15 +145,26 @@ def start(data):
 
 @socketio.on('setiChange')
 def setiChange(data):
+    if str(data['matchID']) in readyUsers:
+        readyUsers.pop(data["matchID"]) 
     emit('setiChange', data, room=data['matchID'])
 
 @socketio.on('join')
 def join(data):
+    if data["room"] not in matches:
+        matches.append(data["room"])
     join_room(data['room'])
 
 @socketio.on('leave')
 def leave(data):
     leave_room(data['room'])
+    if matches[data['room']][0] == data['user']:
+        matches[data['room']][0] = matches[data['room']][0]
+        matches[data['room']].pop()
+    else:
+        matches[data['room']].pop()
+    if len(matches[data['room']]) == 0:
+        del matches[data['room']]
 
 @socketio.on('changeResult')
 def changeResult(data):
@@ -176,7 +190,6 @@ def newMatch(opponent):
         )
         db.session.add(match)
         db.session.commit()
-        matches.append(match.id)
         return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
     elif m2:
         match = m2
@@ -186,13 +199,26 @@ def newMatch(opponent):
         unique = match.unique
     return redirect(url_for('chat', matchID=match.id, unique=unique))
 
-@app.route('/match/save/<matchID>')
-def save(matchID):
+@socketio.on('save')
+def save(data):
+    match = Match.query.filter_by(id=data["matchID"]).first()
+    if match.winner == None:
+        match.winner = data["winner"]
+        db.session.commit()
+        return None
+    match.loser = data["loser"]
+    match.winnerPoints = data["winP"]
+    match.loserPoints = data["losP"]
+    match.sets = data["seti"]
+    match.setResults = data["setRez"]
+    db.session.commit()
+    emit("leave", room=data["room"])
+    print(matches)
     return redirect(url_for('pastmatches'))
 
 @app.route('/pastmatches')
 def pastmatches():
-    return render_template('pastmatches.html')
+    return render_template('pastmatches.html', allInviter=Match.query.filter_by(inviter=current_user.id), allInvitee=Match.query.filter_by(invitee=current_user.id))
 
 chats = {}
 

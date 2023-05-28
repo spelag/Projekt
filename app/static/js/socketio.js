@@ -6,7 +6,14 @@
     });
 
     socket.on('setiChange', data => {
+        document.querySelector('#gumb').style.visibility = "visible";
         document.querySelector("#seti").value = data.seti
+        document.querySelector("#u1").innerHTML = u1
+        document.querySelector("#u2").innerHTML = u2
+    })
+
+    socket.on('leave', () => {
+        socket.emit('leave', {"room": matchID, "user":current_user})
     })
 
     socket.on('start', data => {
@@ -43,6 +50,8 @@
                 notstarter = "2"
             }
             serva = 0
+            u1points = 0
+            u2points = 0
         }
     });
     
@@ -96,15 +105,23 @@
         else if (data["winner"] == "1") {
             document.querySelector("#u2scoreSet").innerHTML = parseInt(document.querySelector("#u2scoreSet").innerHTML) + 1
         }
+        u1points += document.querySelector('#u1score').innerHTML
+        u2points += document.querySelector('#u2score').innerHTML
         document.querySelector('#u1score').innerHTML = 0
         document.querySelector('#u2score').innerHTML = 0
         if (parseInt(document.querySelector("#u1scoreSet").innerHTML) + parseInt(document.querySelector("#u2scoreSet").innerHTML) == document.getElementById("seti").value) {
             document.querySelector("#top").style.display = "block"
             if (parseInt(document.querySelector("#u1scoreSet").innerHTML) > parseInt(document.querySelector("#u2scoreSet").innerHTML)) {
                 winner = u1
+                loser = u2
+                winP = u1points
+                losP = u2points
             }
             else {
                 winner = u2
+                loser = u1
+                winP = u2points
+                losP = u1points
             }
             if (winner == u1) {
                 if (u1 == current_user) {
@@ -113,7 +130,8 @@
                 else {
                     m = u1 + " has won. Better luck next time."
                 }
-                }
+                setRez = document.querySelector("#u1scoreSet").innerHTML + document.querySelector("#u2scoreSet").innerHTML
+            }
             else {
                 if (u2 == current_user) {
                     m = "Congradulations, " + u2 + "! You have won."
@@ -121,6 +139,7 @@
                 else {
                     m = u2 + " has won. Better luck next time."
                 }
+                setRez = document.querySelector("#u2scoreSet").innerHTML + document.querySelector("#u1scoreSet").innerHTML
             }
             document.querySelector("#top").innerHTML = `<h1>${m}</h1>`
             document.querySelector('#addU1').style.display = "none"
@@ -145,6 +164,14 @@
         document.querySelector('#subtractsetU1').style.display = "block"
         document.querySelector('#subtractsetU2').style.display = "block"
         document.querySelector('#confirm').style.display = "none"
+        document.querySelector('#u1score').innerHTML = 0
+        document.querySelector('#u2score').innerHTML = 0
+        if (document.querySelector('#u1scoreSet').innerHTML == document.querySelector("#seti").value) {
+            document.querySelector('#u1scoreSet').innerHTML -= 1
+        }
+        else {
+            document.querySelector('#u2scoreSet').innerHTML -= 1
+        }
 
     })
 
@@ -175,6 +202,7 @@
     };
     
     document.querySelector('#gumb').onclick = () => {
+        document.querySelector('#gumb').style.visibility = "hidden";
         socket.emit('start', {"user":current_user, "matchID":matchID});
     };
 
@@ -184,5 +212,12 @@
 
     document.querySelector('#declineConfirm').onclick = () => {
         socket.emit('changeResult', {"matchID":matchID})
+    }
+
+    document.querySelector('#confirmResult').onclick = () => {
+        socket.emit('save', {"matchID":matchID, "winner":winner, "loser":loser, "seti":document.getElementById("seti").value, "setRez":setRez, "winP":winP, "losP":losP, "room":matchID})
+        document.querySelector('#confirmResult').style.display = "none"
+        document.querySelector('#declineConfirm').style.display = "none"
+        document.querySelector("#top").innerHTML = `<h1>Waiting for your opponent to confirm the results...</h1>`
     }
 });

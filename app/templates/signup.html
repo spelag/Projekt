@@ -16,10 +16,9 @@
                     </div>
                 </div>
             </div>
-        
             <!-- Email input -->
             <div class="form-outline mb-4">
-                <input name="e-mail" onfocusout="checkIfUserExists()" type="email" id="form3Example3" class="form-control" required/>
+                <input name="e-mail" value="{{mail}}" onfocusout="checkIfUserExists()" type="email" id="form3Example3" class="form-control" required/>
                 <label class="form-label" for="form3Example3">Email address</label>
             </div>
         
@@ -34,22 +33,6 @@
         
             <!-- Register buttons -->
             <div class="text-center">
-                <p>or sign up with:</p>
-                <button type="button" class="btn btn-secondary btn-floating mx-1">
-                    <i class="fab fa-facebook-f"></i>
-                </button>
-        
-                <button type="button" class="btn btn-secondary btn-floating mx-1">
-                    <i class="fab fa-google"></i>
-                </button>
-        
-                <button type="button" class="btn btn-secondary btn-floating mx-1">
-                    <i class="fab fa-twitter"></i>
-                </button>
-            
-                <button type="button" class="btn btn-secondary btn-floating mx-1">
-                    <i class="fab fa-github"></i>
-                </button>
                 <p>Already a member? <a href="/login">Log in</a></p>
             </div>
         </form>

@@ -11,11 +11,11 @@
 		<div class="col-md-3 text-end">
             <img id="turn1" src="/static/img/lopar.png" alt="Pingpong racket: Your turn" style="visibility: hidden;">
 		</div>
-		<div class="col-md-3 text-end">
+		<div class="col-md-2 text-end">
             <h1 class="text-end" id="u1">{{u1.username}}</h1>
             <!-- <img src="/static/img/{{u1Score}}.png", width="500", alt="score"> -->
-			<h1 id="u1score"></h1>
-			<h3 id="u1scoreSet"></h3>
+			<h1 class="points__team" id="u1score" style="font-size: min(20vw, 30vh)"></h1>
+			<h3 class="points__team" id="u1scoreSet"></h3>
 			<div class="d-flex justify-content-end">
 				<button class="btn btn-primary" style="display: none;" id="addU1" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractU1" type="button">-</button>
@@ -25,10 +25,13 @@
 				<button class="btn btn-primary" style="display: none;" id="subtractsetU1" type="button">-</button>
 			</div>
 		</div>
-		<div class="col-md-3 text-beginning">
+		<div class="col-md-2 d-flex justify-content-center">
+			<span class="points__versus d-flex justify-content-center">&#215;</span>
+		</div>
+		<div class="col-md-2 text-beginning">
             <h1 id="u2">{{u2.username}}</h1>
-            <h1 id="u2score"></h1>
-            <h3 id="u2scoreSet"></h3>
+            <h1 class="points__team" id="u2score" style="font-size: min(20vw, 30vh)"></h1>
+            <h3 class="points__team" id="u2scoreSet"></h3>
 			<div class="d-flex justify-content-beginning">
 				<button class="btn btn-primary" style="display: none;" id="addU2" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractU2" type="button">-</button>
@@ -54,7 +57,7 @@
 			</div>
 		</div>
 		<div id="confirm" style="display: none;" class="col-md text-center">
-			<a class='btn btn-success' href="{{url_for('save', matchID=matchID)}}">Confirm results</a>
+			<a class='btn btn-success' id="confirmResult">Confirm results</a>
 			<a class='btn btn-danger' id="declineConfirm">Cancel</a>
 		</div>
 	</div>
