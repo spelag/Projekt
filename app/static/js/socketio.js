@@ -14,6 +14,16 @@
 
     socket.on('leave', () => {
         socket.emit('leave', {"room": matchID, "user":current_user})
+        document.querySelector("#top").innerHTML = `<h1>Results confirmed and saved.</h1>`
+        document.querySelector('#u1scoreSet').style.display = "none"
+        document.querySelector('#u2scoreSet').style.display = "none"
+        document.querySelector("#u1").style.display = "none"
+        document.querySelector("#u2").style.display = "none"
+        document.querySelector("#iks").style.visibility = "hidden"
+    })
+
+    socket.on('stopWait', () => {
+        waiting = false
     })
 
     socket.on('start', data => {
@@ -155,6 +165,7 @@
             document.querySelector('#turn1').style.visibility = "hidden"
             document.querySelector('#turn2').style.visibility = "hidden"
             document.querySelector('#confirm').style.display = "block"
+            waiting = true
         }
     })
 
@@ -172,7 +183,7 @@
         else {
             document.querySelector('#u2scoreSet').innerHTML -= 1
         }
-
+        waiting = true
     })
 
     document.querySelector('#addU1').onclick = () => {
@@ -215,9 +226,9 @@
     }
 
     document.querySelector('#confirmResult').onclick = () => {
-        socket.emit('save', {"matchID":matchID, "winner":winner, "loser":loser, "seti":document.getElementById("seti").value, "setRez":setRez, "winP":winP, "losP":losP, "room":matchID})
         document.querySelector('#confirmResult').style.display = "none"
         document.querySelector('#declineConfirm').style.display = "none"
         document.querySelector("#top").innerHTML = `<h1>Waiting for your opponent to confirm the results...</h1>`
+        socket.emit('save', {"matchID":matchID, "winner":winner, "loser":loser, "seti":document.getElementById("seti").value, "setRez":setRez, "winP":winP, "losP":losP, "waiting":waiting, "room":matchID})
     }
 });

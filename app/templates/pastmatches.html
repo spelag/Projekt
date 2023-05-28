@@ -20,21 +20,31 @@
                 <th scope="col">Date</th>
                 <th scope="col">Winner</th>
                 <th scope="col">Result</th>
-                <th scope="col">Joined</th>
+                <th scope="col">More info</th>
             </tr>
             </thead>
             <tbody>
                 {% for i in allInviter %}
                     <tr>
-                        <th scope="row">{{i.invitee}}</th>
+                        <th scope="row">{{User.query.filter_by(id=i.invitee).first().username}}</th>
                         <td>{{i.matchDate.day}}. {{i.matchDate.month}}. {{i.matchDate.year}}</td>
                         <td>{{i.winner}}</td>
-                        <td>{{i.winnerPoints}}:{{i.loserPoints}}</td>
-                        <td>{{i.location}}</td>
+                        <td>{{i.setResults[0]}}:{{i.setResults[1]}}</td>
+                        <td>/</td>
+                    </tr>
+                {% endfor %}
+                {% for i in allInvitee %}
+                    <tr>
+                        <th scope="row">{{User.query.filter_by(id=i.inviter).first().username}}</th>
+                        <td>{{i.matchDate.day}}. {{i.matchDate.month}}. {{i.matchDate.year}}</td>
+                        <td>{{i.winner}}</td>
+                        <td>{{i.setResults[0]}}:{{i.setResults[1]}}</td>
+                        <td>/</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
+        <!-- TODO: more info te vrze nekam kjer so posamezni scori tega matcha, tm k jih ni (kr seti) napise da ni -->
         {% endif %}
     </div>
 </div>

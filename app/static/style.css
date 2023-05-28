@@ -11,12 +11,6 @@ div {
 
 .points__team {
   position: relative;
-  animation-delay: 0;
-  animation-direction: normal;
-  animation-duration: 750ms;
-  animation-fill-mode: both;
-  animation-iteration-count: 1;
-  animation-timing-function: linear;
   text-shadow: 0 0 32px rgb(0 0 0), 0 0 96px rgb(0 0 0);
   transition-delay: 150ms;
   transition-duration: 50ms;

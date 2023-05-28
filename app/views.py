@@ -133,13 +133,13 @@ readyUsers = {}
 
 @socketio.on('start')
 def start(data):
-    if str(data['matchID']) in readyUsers:
-        Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now
+    if len(readyUsers[data["matchID"]]) == 1:
+        Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now()
+        # match.matchDate = datetime.utcnow
+        db.session.commit()
         readyUsers[data["matchID"]].append(data['user'])
         emit('start', {"user":data['user'], "ready": True, "starter":str(random.choice([1,2]))}, room=data['matchID'])
-        # if user already in ready users?????
     else:
-        readyUsers[data["matchID"]] = []
         readyUsers[data["matchID"]].append(data['user'])
         emit('start', {"user":data['user'], "ready": False}, room=data['matchID'])
 
@@ -151,20 +151,21 @@ def setiChange(data):
 
 @socketio.on('join')
 def join(data):
-    if data["room"] not in matches:
-        matches.append(data["room"])
+    if data["room"] not in readyUsers:
+        readyUsers[data["room"]] = []
     join_room(data['room'])
 
 @socketio.on('leave')
 def leave(data):
     leave_room(data['room'])
-    if matches[data['room']][0] == data['user']:
-        matches[data['room']][0] = matches[data['room']][0]
-        matches[data['room']].pop()
+    if readyUsers[data['room']][0] == data['user']:
+        readyUsers[data['room']][0] = readyUsers[data['room']][0]
+        readyUsers[data['room']].pop()
     else:
-        matches[data['room']].pop()
-    if len(matches[data['room']]) == 0:
-        del matches[data['room']]
+        readyUsers[data['room']].pop()
+    if len(readyUsers[data['room']]) == 0:
+        del readyUsers[data['room']]
+    return redirect(url_for('pastmatches'))
 
 @socketio.on('changeResult')
 def changeResult(data):
@@ -176,6 +177,7 @@ def newMatch(opponent):
     m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
     if not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2:
         unique = generate_unique_code(10)
+        matches.append(unique)
         invite = Invites(
             inviter = current_user.id,
             invitee = opponent.id
@@ -202,10 +204,9 @@ def newMatch(opponent):
 @socketio.on('save')
 def save(data):
     match = Match.query.filter_by(id=data["matchID"]).first()
-    if match.winner == None:
-        match.winner = data["winner"]
-        db.session.commit()
-        return None
+    if data["waiting"]:
+        emit("stopWait", room=data["room"])
+        return
     match.loser = data["loser"]
     match.winnerPoints = data["winP"]
     match.loserPoints = data["losP"]
@@ -213,12 +214,10 @@ def save(data):
     match.setResults = data["setRez"]
     db.session.commit()
     emit("leave", room=data["room"])
-    print(matches)
-    return redirect(url_for('pastmatches'))
 
 @app.route('/pastmatches')
 def pastmatches():
-    return render_template('pastmatches.html', allInviter=Match.query.filter_by(inviter=current_user.id), allInvitee=Match.query.filter_by(invitee=current_user.id))
+    return render_template('pastmatches.html', User=User, allInviter=Match.query.filter_by(inviter=current_user.id), allInvitee=Match.query.filter_by(invitee=current_user.id))
 
 chats = {}
 
