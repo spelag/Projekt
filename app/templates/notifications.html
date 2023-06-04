@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}See your Notifications.{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row d-flex justify-content-evenly">
+        <div class="col-6 d-flex justify-content-evenly">
+            <h1>This page is still being built. See:</h1>
+        </div>
+    </div>
+    <div class="row d-flex justify-content-center">
+        <div class="col-6 d-flex justify-content-evenly">
+            <a class="btn btn-warning" href="/members/friendrequests">Friend Requests</a><a class="btn btn-warning" href="/invites">Match Invites</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
