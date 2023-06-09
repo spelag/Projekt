@@ -139,7 +139,6 @@ readyUsers = {}
 def start(data):
     if len(readyUsers[data["matchID"]]) == 1:
         Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now()
-        # match.matchDate = datetime.utcnow
         db.session.commit()
         readyUsers[data["matchID"]].append(data['user'])
         emit('start', {"user":data['user'], "ready": True, "starter":str(random.choice([1,2]))}, room=data['matchID'])
@@ -150,7 +149,8 @@ def start(data):
 @socketio.on('setiChange')
 def setiChange(data):
     if str(data['matchID']) in readyUsers:
-        readyUsers.pop(data["matchID"]) 
+        readyUsers.pop(data["matchID"])
+        readyUsers[data["matchID"]] = []
     emit('setiChange', data, room=data['matchID'])
 
 @socketio.on('join')
@@ -163,7 +163,7 @@ def join(data):
 def leave(data):
     leave_room(data['room'])
     if readyUsers[data['room']][0] == data['user']:
-        readyUsers[data['room']][0] = readyUsers[data['room']][0]
+        readyUsers[data['room']][0] = readyUsers[data['room']][1]
         readyUsers[data['room']].pop()
     else:
         readyUsers[data['room']].pop()
@@ -179,7 +179,7 @@ def changeResult(data):
 def newMatch(opponent):
     opponent = User.query.filter_by(id=opponent).first()
     m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
-    if not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2:
+    if (not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2) or (m2.started == False or Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first().started == False):
         unique = generate_unique_code(10)
         matches.append(unique)
         invite = Invites(
@@ -192,7 +192,8 @@ def newMatch(opponent):
             unique = unique,
             inviter = current_user.id,
             invitee = opponent.id,
-            invite = invite.id
+            invite = invite.id,
+            started = True
         )
         db.session.add(match)
         db.session.commit()
@@ -212,16 +213,21 @@ def save(data):
         emit("stopWait", room=data["room"])
         return
     match.loser = data["loser"]
+    match.winner = data["winner"]
     match.winnerPoints = data["winP"]
     match.loserPoints = data["losP"]
     match.sets = data["seti"]
     match.setResults = data["setRez"]
+    match.started = False
+    match.inviter = None
+    print(match.invite)
+    db.session.delete(Invites.query.filter_by(id=match.invite).first())
     db.session.commit()
     emit("leave", room=data["room"])
 
 @app.route('/pastmatches')
 def pastmatches():
-    return render_template('pastmatches.html', User=User, allInviter=Match.query.filter_by(inviter=current_user.id), allInvitee=Match.query.filter_by(invitee=current_user.id))
+    return render_template('pastmatches.html', user=current_user, User=User, allInviter=Match.query.filter_by(winner=current_user.username), allInvitee=Match.query.filter_by(loser=current_user.username))
 
 chats = {}
 

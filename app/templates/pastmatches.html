@@ -26,7 +26,7 @@
             <tbody>
                 {% for i in allInviter %}
                     <tr>
-                        <th scope="row">{{User.query.filter_by(id=i.invitee).first().username}}</th>
+                        <th scope="row">{{User.query.filter_by(username=i.loser).first().username}}</th>
                         <td>{{i.matchDate.day}}. {{i.matchDate.month}}. {{i.matchDate.year}}</td>
                         <td>{{i.winner}}</td>
                         <td>{{i.setResults[0]}}:{{i.setResults[1]}}</td>
@@ -35,7 +35,7 @@
                 {% endfor %}
                 {% for i in allInvitee %}
                     <tr>
-                        <th scope="row">{{User.query.filter_by(id=i.inviter).first().username}}</th>
+                        <th scope="row">{{User.query.filter_by(username=i.winner).first().username}}</th>
                         <td>{{i.matchDate.day}}. {{i.matchDate.month}}. {{i.matchDate.year}}</td>
                         <td>{{i.winner}}</td>
                         <td>{{i.setResults[0]}}:{{i.setResults[1]}}</td>

@@ -69,3 +69,4 @@ class Match(db.Model):
     sets = db.Column(db.Integer)
     setResults = db.Column(db.String(30))
     matchDate = db.Column(db.DateTime(timezone=True))
+    started = db.Column(db.Boolean)

@@ -62,6 +62,7 @@
             serva = 0
             u1points = 0
             u2points = 0
+            waiting = true
         }
     });
     
