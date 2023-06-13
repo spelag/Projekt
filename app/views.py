@@ -59,7 +59,7 @@ def signin():
     form = request.form
     user = User.query.filter_by(email=form['e-mail']).first()
     if not user:
-        flash("There is no account with this e-mail.")
+        flash("Wrong credidentials.")
         return redirect(url_for('login'))
     if user.check_password(form['password']):
         if len(form) == 2:
@@ -68,7 +68,7 @@ def signin():
             login_user(user, remember=True)
         return redirect(url_for('index'))
     else:
-        flash("Wrong password. Try again.")
+        flash("Wrong credidentials.")
         return redirect(url_for('login'))
 
 @app.route('/logout')
