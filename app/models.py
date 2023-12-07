@@ -17,12 +17,12 @@ class User(db.Model, UserMixin):
     age_group = db.Column(db.String(6))
     location = db.Column(db.String(120))
 
-    friends = db.relationship('Friend', backref='user', lazy=True)
-    requests = db.relationship('FriendRequest', backref='user', lazy=True)
-    invites = db.relationship('Invites', backref='user', lazy=True)
-    outboundInvites = db.relationship('Match', backref='user', lazy=True)
-    wins = db.relationship('Wins', backref='user', lazy=True)
-    losses = db.relationship('Losses', backref='user', lazy=True)
+    friends = db.relationship('Friend', back_populates='user', lazy=True)
+    requests = db.relationship('FriendRequest', back_populates='user', lazy=True)
+    invites = db.relationship('Invites', back_populates='user', lazy=True)
+    outboundInvites = db.relationship('Match', back_populates='user', lazy=True)
+    wins = db.relationship('Wins', back_populates='user', lazy=True)
+    losses = db.relationship('Losses', back_populates='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -66,7 +66,13 @@ class Match(db.Model):
     loser = db.Column(db.Integer, db.ForeignKey('losses.id'))
     winnerPoints = db.Column(db.String(10))
     loserPoints = db.Column(db.String(10))
-    sets = db.Column(db.Integer)
+    # sets = db.Column(db.Integer)
     setResults = db.Column(db.String(30))
     matchDate = db.Column(db.DateTime(timezone=True))
     started = db.Column(db.Boolean)
+    
+    # sets = relationship()
+
+# class Set(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     match_id = db.Column(db.Integer, db.ForeignKey('matches.match_id'))

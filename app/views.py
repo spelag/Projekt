@@ -1,12 +1,13 @@
 from app import app, db, socketio
-from flask import render_template, request, redirect, url_for, jsonify, session, flash
+from flask import render_template, request, redirect, url_for, jsonify, flash, send_file
 from app.models import User, FriendRequest, Friend, Match, Invites, Wins, Losses, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from sqlalchemy import text, update
+from sqlalchemy import text, update, select, or_
 import random
 from string import ascii_letters
 from flask_socketio import join_room, leave_room, send, emit
 from datetime import datetime
+import csv
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -227,7 +228,51 @@ def save(data):
 
 @app.route('/pastmatches')
 def pastmatches():
-    return render_template('pastmatches.html', user=current_user, User=User, allInviter=Match.query.filter_by(winner=current_user.username), allInvitee=Match.query.filter_by(loser=current_user.username))
+    a = (db.session.query(User).where(User.id == current_user.id)).first()
+    b = (select(Match).where(Match.winner == current_user.id).where(Match.loser == current_user.id))
+    d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate.desc()))
+    for i in d:
+        print(i)
+        print(i.winner)
+    print(a)
+    print(a.friends)
+    print(d.all())
+
+    # allInviter=Match.query.filter_by(winner=current_user.username), allInvitee=Match.query.filter_by(loser=current_user.username)
+    return render_template('pastmatches.html', user=current_user, User=User, matches=d)
+
+@app.route('/pastmatches/sort/<what>/<type>')
+def pastmatchesSort(what, type):
+    if what == "date":
+        if type == "desc":
+            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate.desc()))
+        elif type == "incr":
+            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate))
+    elif what == "winner":
+        if type == "desc":
+            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.winner.desc()))
+        elif type == "incr":
+            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.winner))
+
+    return render_template('pastmatches.html', user=current_user, User=User, matches=d)
+
+@app.route('/pastmatches/export')
+def export():
+    matches = Match.query.filter(or_(Match.winner == current_user.username, Match.loser == current_user.username))
+    with open('export.csv', 'w') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["winner", "loser", "sets", "winnerSet", "loserSet", "winnerPoints1", "winnerPoints2", "winnerPoints3", "loserPoints1", "loserPoints2", "loserPoints3", "date"])
+        for m in matches:
+            writer.writerow([m.winner, m.loser, m.sets, m.setResults[0], m.setResults[1], m.winnerPoints[:2], m.winnerPoints[2:4], m.winnerPoints[4:], m.loserPoints[:2], m.loserPoints[2:4], m.loserPoints[4:], m.matchDate])
+
+    fName = current_user.username + 'PingPongerExport.csv'
+    return send_file('../export.csv', mimetype='type/csv', download_name=fName, as_attachment=True)
+
+@app.route('/match/<id>')
+def oneMatch(id):
+    match = Match.query.filter(Match.id == id).first()
+    return render_template('onematch.html', user=current_user, match=match, User=User)
+
 
 chats = {}
 

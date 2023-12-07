@@ -60,7 +60,7 @@
                                             </svg>
                                         </a>
                                     </td>
-                                {% elif btnA == "primary" %}
+                                {% elif btnA == "primary" and loggedin %}
                                     <td>
                                         {% if not Friend.query.filter_by(friendID=current_user.id, friendOG=allUsers[i].id).first() and (not FriendRequest.query.filter_by(requester=current_user.id, requested=allUsers[i].id).first()) %}
                                             <a href="{{url_for('friendRequest', friendName=allUsers[i].username, friendID=allUsers[i].id)}}">
