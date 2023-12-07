@@ -59,6 +59,19 @@ class User(db.Model, UserMixin):
             requests.append(i)
         return requests
 
+    def get_inboundInvites(self):
+        invites = []
+        a = Invite.query.filter(Invite.invitee==self.id)
+        for i in a:
+            invites.append(User.query.get(i.inviter))
+        return invites
+    def get_outboundInvites(self):
+        invites = []
+        a = Invite.query.filter(Invite.inviter==self.id)
+        for i in a:
+            invites.append(User.query.get(i.invitee))
+        return invites
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     

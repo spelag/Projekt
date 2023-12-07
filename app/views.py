@@ -179,33 +179,43 @@ def changeResult(data):
 @app.route('/newmatch/<opponent>')
 def newMatch(opponent):
     opponent = User.query.filter_by(id=opponent).first()
-    m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
-    if (not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2) or (m2.started == False or Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first().started == False):
-        unique = generate_unique_code(10)
-        matches.append(unique)
-        invite = Invite(
-            inviter = current_user.id,
-            invitee = opponent.id
-        )
-        db.session.add(invite)
-        db.session.commit()
-        match = Match(
-            unique = unique,
-            inviter = current_user.id,
-            invitee = opponent.id,
-            invite = invite.id,
-            started = True
-        )
-        db.session.add(match)
-        db.session.commit()
-        return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
-    elif m2:
-        match = m2
-        unique = match.unique        
-    else:
-        match = Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first()
-        unique = match.unique
-    return redirect(url_for('chat', matchID=match.id, unique=unique))
+
+    invite = Invite.query.filter(or_(Invite.inviter==current_user.id, Invite.invitee==current_user.id), or_(Invite.inviter==opponent.id, Invite.invitee==opponent.id)).first()
+    if invite:
+        flash("Such invite already exists.")
+        return redirect(url_for('invites'))
+
+    invite = Invite(
+        inviter = current_user.id,
+        invitee = opponent.id
+    )
+    db.session.add(invite)
+    db.session.commit()
+    return
+
+    # m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
+    # if (not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2) or (m2.started == False or Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first().started == False):
+    #     unique = generate_unique_code(10)
+    #     matches.append(unique)
+    #     db.session.add(invite)
+    #     db.session.commit()
+    #     match = Match(
+    #         unique = unique,
+    #         inviter = current_user.id,
+    #         invitee = opponent.id,
+    #         invite = invite.id,
+    #         started = True
+    #     )
+    #     db.session.add(match)
+    #     db.session.commit()
+    #     return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
+    # elif m2:
+    #     match = m2
+    #     unique = match.unique        
+    # else:
+    #     match = Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first()
+    #     unique = match.unique
+    # return redirect(url_for('chat', matchID=match.id, unique=unique))
 
 @socketio.on('save')
 def save(data):
@@ -298,7 +308,11 @@ def message(data):
 
 @app.route('/invites')
 def invites():
-    return render_template('invites.html', invitesLen=len(current_user.invites), invitedLen=len(current_user.outboundInvites), User=User, Match=Match)
+    invites = current_user.get_inboundInvites()
+    invited = current_user.get_outboundInvites()
+    print(invites)
+    print(invited)
+    return render_template('invites.html', invitesLen=len(invites), invitedLen=len(invited), invites=invites, invited=invited)
 
 @app.route('/decline/<invite>')
 def declineInvite(invite):

@@ -13,10 +13,10 @@
                     {% if invitesLen > 0 %}
                         {% for i in range(invitesLen) %}
                             <tr>
-                                <th scope="row">{{User.query.filter_by(id=current_user.invites[i].inviter).first().username}}</th>
+                                <th scope="row">{{invites[i].username}}</th>
                                 <td class="text-end">
-                                    <a class="btn btn-success" href="{{url_for('chat', matchID=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().id, unique=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().unique)}}">Accept</a>
-                                    <a class="btn btn-danger" href="{{url_for('declineInvite', invite=current_user.invites[i].id)}}">Decline</a>
+                                    <a class="btn btn-success">Accept</a>
+                                    <a class="btn btn-danger" >Decline</a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -31,10 +31,10 @@
                 {% if invitedLen > 0 %}
                     {% for i in range(invitedLen) %}
                         <tr>
-                            <th scope="row">{{User.query.filter_by(id=current_user.outboundInvites[i].invitee).first().username}}</th>
+                            <th scope="row">{{invited[i].username}}</th>
                             <td class="text-end">
-                                <a class="btn btn-primary" href="{{url_for('chat', matchID=current_user.outboundInvites[i].id, unique=current_user.outboundInvites[i].unique)}}">Chat</a>
-                                <a class="btn btn-danger" href="{{url_for('declineInvite', invite=current_user.outboundInvites[i].invite)}}">Cancel</a>
+                                <a class="btn btn-primary">Chat</a>
+                                <a class="btn btn-danger">Cancel</a>
                             </td>
                         </tr>
                     {% endfor %}
