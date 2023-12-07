@@ -1,6 +1,6 @@
 from app import app, db, socketio
 from flask import render_template, request, redirect, url_for, jsonify, flash, send_file
-from app.models import User, FriendRequest, Friend, Match, Invites, Wins, Losses, login_manager
+from app.models import User, FriendRequest, Friendship, Match, Invite, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from sqlalchemy import text, update, select, or_
 import random
@@ -183,7 +183,7 @@ def newMatch(opponent):
     if (not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2) or (m2.started == False or Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first().started == False):
         unique = generate_unique_code(10)
         matches.append(unique)
-        invite = Invites(
+        invite = Invite(
             inviter = current_user.id,
             invitee = opponent.id
         )
@@ -222,7 +222,7 @@ def save(data):
     match.started = False
     match.inviter = None
     print(match.invite)
-    db.session.delete(Invites.query.filter_by(id=match.invite).first())
+    db.session.delete(Invite.query.filter_by(id=match.invite).first())
     db.session.commit()
     emit("leave", room=data["room"])
 
@@ -303,7 +303,7 @@ def invites():
 @app.route('/decline/<invite>')
 def declineInvite(invite):
     match = Match.query.filter_by(invite=invite).first()
-    invite = Invites.query.filter_by(id=invite).first()
+    invite = Invite.query.filter_by(id=invite).first()
     db.session.delete(invite)
     db.session.delete(match)
     db.session.commit()
@@ -316,7 +316,7 @@ def profile(username, userID):
         return render_template('profile.html', loggedin=False, user=user)
     elif int(userID) == current_user.id:
         return render_template('profileSettings.html')
-    friends=Friend.query.filter_by(friendOG=current_user.id, friendID=userID).first()
+    friends=Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id), or_(Friendship.friendB==userID, Friendship.friendA==userID)).first()
     requests=FriendRequest.query.filter_by(requested=current_user.id, requester=userID).first()
     alreadyRequested=FriendRequest.query.filter_by(requester=current_user.id, requested=userID).first()
     if friends == None:
@@ -343,27 +343,34 @@ def allusers(who):
     btnA = "secondary"
     btnF = "secondary"
     btnR = "secondary"
+
+    friends = current_user.get_friends()
+    requested = []
+    for i in current_user.get_requested():
+        requested.append(User.query.filter_by(id=i.requested).first())
+    requester = []
+    for i in current_user.get_requests():
+        requester.append(User.query.filter_by(id=i.requester).first())
+
     if who == "friends":
-        allUsers = []
-        for i in current_user.friends:
-            allUsers.append(User.query.filter_by(id=i.friendID).first())
+        print(current_user.get_friends())
+        allUsers = friends
         userCount = len(allUsers)
         btnF = "primary"
     elif who == "friendrequests":
-        allUsers = []
-        for i in current_user.requests:
-            allUsers.append(User.query.filter_by(id=i.requester).first())
+        allUsers = requester
         userCount = len(allUsers)
         btnR = "primary"
     else:
         allUsers = db.session.query(User)
         userCount = allUsers.count()
         btnA = "primary"
-    return render_template('allusers.html', userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR, Friend=Friend, FriendRequest=FriendRequest)
+    print(requested, allUsers)
+    return render_template('allusers.html', userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR, friends=friends, requested=requested, requester=requester)
 
 @app.route('/addfriend/<friendName>/<friendID>')
 def addFriend(friendName, friendID):
-    friend = Friend.query.filter_by(friendOG=current_user.id, friendID=friendID).first()
+    friend = Friendship.query.filter_by(friendA=current_user.id, friendB=friendID).first()
     if FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first():
         db.session.delete(FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first())
     else:
@@ -371,21 +378,19 @@ def addFriend(friendName, friendID):
     if friend:
         flash("You are already friends with this user.")
         return redirect(url_for('allusers', who="friends"))
-    friend = Friend(
-        friendID = current_user.id,
-        friendOG = friendID)
-    db.session.add(friend)
-    friend = Friend(
-        friendOG = current_user.id,
-        friendID = friendID)
+    friend = Friendship(
+        friendB = current_user.id,
+        friendA = friendID)
     db.session.add(friend)
     db.session.commit()
     return redirect(url_for('profile', username=friendName, userID=friendID))
 
 @app.route('/removefriend/<friendName>/<friendID>')
 def removeFriend(friendName, friendID):
-    db.session.delete(Friend.query.filter_by(friendOG=current_user.id, friendID=friendID).first())
-    db.session.delete(Friend.query.filter_by(friendID=current_user.id, friendOG=friendID).first())
+    a = (Friendship.query.filter_by(friendA=current_user.id, friendB=friendID).first())
+    if not a:
+        a = Friendship.query.filter_by(friendB=current_user.id, friendA=friendID).first()
+    db.session.delete(a)
     db.session.commit()
     return redirect(url_for('profile', username=friendName, userID=friendID))
 
@@ -410,4 +415,5 @@ def friendRequest(friendName, friendID):
         requested = friendID)
     db.session.add(friendRequest)
     db.session.commit()
+    flash("Friend request sent successfully.")
     return redirect(url_for('allusers', who="all"))

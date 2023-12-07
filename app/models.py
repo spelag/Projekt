@@ -3,11 +3,24 @@ from app import app, db
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 
+from sqlalchemy import or_
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+class Friendship(db.Model):
+    __tablename__ = 'friendships'
+    id = db.Column(db.Integer, primary_key=True)
+    # friend who requested
+    friendA = db.Column(db.Integer, nullable=False)
+    # friend who accepted
+    friendB = db.Column(db.Integer, nullable=False)
+    # the matches they played
+    matches = db.Relationship('Match', back_populates='friendship')
+
 class User(db.Model, UserMixin):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
@@ -17,12 +30,34 @@ class User(db.Model, UserMixin):
     age_group = db.Column(db.String(6))
     location = db.Column(db.String(120))
 
-    friends = db.relationship('Friend', back_populates='user', lazy=True)
-    requests = db.relationship('FriendRequest', back_populates='user', lazy=True)
-    invites = db.relationship('Invites', back_populates='user', lazy=True)
-    outboundInvites = db.relationship('Match', back_populates='user', lazy=True)
-    wins = db.relationship('Wins', back_populates='user', lazy=True)
-    losses = db.relationship('Losses', back_populates='user', lazy=True)
+    # inboundRequests = db.relationship('FriendRequest', back_populates='requested', lazy=True)
+    # outboundRequests = db.relationship('FriendRequest', back_populates='requester', lazy=True)
+    # inboundInvites = db.relationship('Match', back_populates='invitee', lazy=True)
+    # outboundInvites = db.relationship('Match', back_populates='inviter', lazy=True)
+
+    def get_friends(self):
+        friends = []
+        a = Friendship.query.filter(or_(Friendship.friendA==self.id, Friendship.friendB==self.id))
+        for i in a:
+            if i.friendA == self.id:
+                friends.append(User.query.get(i.friendB))
+            elif i.friendB == self.id:
+                friends.append(User.query.get(i.friendA))
+        return friends
+    
+    def get_requests(self):
+        requests = []
+        a = FriendRequest.query.filter(FriendRequest.requested==self.id)
+        for i in a:
+            requests.append(i)
+        return requests
+
+    def get_requested(self):
+        requests = []
+        a = FriendRequest.query.filter(FriendRequest.requester==self.id)
+        for i in a:
+            requests.append(i)
+        return requests
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -30,49 +65,60 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-class Friend(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    friendID = db.Column(db.Integer, nullable=False)
-    friendOG = db.Column(db.Integer, db.ForeignKey('user.id'))
-
 class FriendRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    requester = db.Column(db.Integer, nullable=False)
-    requested = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-class Wins(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    winner = db.Column(db.Integer, db.ForeignKey('user.id'))
-    match = db.relationship('Match', backref='wins', lazy=True)
+    requester = db.Column(db.Integer)
+    requested = db.Column(db.Integer)
 
-class Losses(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    loser = db.Column(db.Integer, db.ForeignKey('user.id'))
-    match = db.relationship('Match', backref='losses', lazy=True)
-
-class Invites(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    inviter = db.Column(db.Integer)
-    invitee = db.Column(db.Integer, db.ForeignKey('user.id'))
-    match = db.relationship('Match', backref='invites', lazy=True)
+    # requested = db.relationship('User', back_populates='inboundRequests', lazy=True)
+    # requester = db.relationship('User', back_populates='outboundRequests', lazy=True)
 
 class Match(db.Model):
+    __tablename__ = 'matches'
     id = db.Column(db.Integer, primary_key=True)
     unique = db.Column(db.String(10), nullable=False)
-    inviter = db.Column(db.Integer, db.ForeignKey('user.id'))
-    invitee = db.Column(db.Integer)
-    invite = db.Column(db.Integer, db.ForeignKey('invites.id'))
-    winner = db.Column(db.Integer, db.ForeignKey('wins.id'))
-    loser = db.Column(db.Integer, db.ForeignKey('losses.id'))
-    winnerPoints = db.Column(db.String(10))
-    loserPoints = db.Column(db.String(10))
+    # winnerPoints = db.Column(db.String(10))
+    # loserPoints = db.Column(db.String(10))
     # sets = db.Column(db.Integer)
-    setResults = db.Column(db.String(30))
+    # setResults = db.Column(db.String(30))
+    setiCount = db.Column(db.Integer)
     matchDate = db.Column(db.DateTime(timezone=True))
     started = db.Column(db.Boolean)
     
-    # sets = relationship()
+    # foreign keys ig
+    friendship_id = db.Column(db.Integer, db.ForeignKey('friendships.id'))
+    
+    # the two friends playing the match
+    friendship = db.relationship('Friendship', back_populates='matches', lazy=True)
+    
+    # the winner and the loser
+    winner = db.Column(db.Integer)
+    loser = db.Column(db.Integer)
 
-# class Set(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     match_id = db.Column(db.Integer, db.ForeignKey('matches.match_id'))
+    # the invite before the match
+    invite = db.relationship('Invite', back_populates='match', lazy=True)
+
+    # the sets played within this match
+    sets = db.relationship('Set', back_populates='match', lazy=True)
+
+
+class Invite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    inviter = db.Column(db.Integer)
+    invitee = db.Column(db.Integer)
+
+    match = db.relationship('Match', back_populates='invite', lazy=True)
+    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'))
+
+class Set(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    scoreW = db.Column(db.Integer)
+    scoreL = db.Column(db.Integer)
+
+    winner = db.Column(db.Integer)
+    loser = db.Column(db.Integer)
+
+    match = db.relationship('Match', back_populates='sets', lazy=True)
+    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'))

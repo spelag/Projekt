@@ -5,3 +5,9 @@ preveri zakaj winner pa loser points 0000
 - mogoc spremen database??
 nared da je lah sam en username
 import/export the results
+frontpage not logged in
+- bottom about us etc
+- un text umes
+- credit properly
+logged in frontpage
+- boljsi opis friends(also add friends)
