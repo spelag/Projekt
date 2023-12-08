@@ -1,6 +1,6 @@
 from app import app, db, socketio
 from flask import render_template, request, redirect, url_for, jsonify, flash, send_file, session
-from app.models import User, FriendRequest, Friendship, Match, Invite, login_manager
+from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from sqlalchemy import text, update, select, or_
 import random
@@ -16,9 +16,11 @@ def load_user(user_id):
 @app.route('/')
 def index():
     session['url'] = url_for('index')
-    matches=Match.query.filter_by(started=1).all()
-    print(matches)
     if current_user.is_authenticated:
+        matches = []
+        friendships = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id))
+        for i in friendships:
+            matches.append(i.matches)
         return render_template('loggedinHomepage.html', User=User, matches=matches, length=len(matches))
     return render_template('homepage.html')
 
@@ -195,6 +197,7 @@ def acceptMatch(inviter):
     match.unique = unique
     match.invite = [invite]
     match.started = True
+    match.setiCount = 3
     db.session.add(match)
     friendship.matches.append(match)
     db.session.delete(invite)
@@ -387,6 +390,23 @@ def editProfile():
     current_user.experience = info['experience']
     db.session.commit()
     return redirect(url_for('profile', username=current_user.username, userID=current_user.id))
+
+@app.route('/editmatch/<matchID>', methods=["GET", "POST"])
+def editMatch(matchID):
+    match = Match.query.get(matchID)
+    if match == None:
+        return redirect(url_for('index'))
+    if request.method == "GET":
+        locations = Location.query.all()
+        return render_template('editCurrentmatch.html', locations=locations, match=match)
+    info = request.form
+    print(info['location'])
+    # match.location = info['location']
+    match.tag
+    match.notes = info['note']
+    match.timeSuggestion
+    db.session.commit()
+    return redirect(url_for('oneMatch', id=match.id))
 
 @app.route('/members/<who>')
 def allusers(who):

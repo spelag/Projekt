@@ -19,6 +19,13 @@ popup za remove friend
 current matches
 statistics
 zamenjaj sliko ce je copyright
+zamenjaj slikco pr match profile
+zamenjaj slikco pr profiles???
+
+make it so that you can add tags and locations
+make chat available even after accepting match
+
+make matches na homepagu prettier pa explaini kako deluje
 
 
 <a class="btn btn-primary" href="{{url_for('match', matchID=matchID, unique=unique)}}">Proceed to the Match</a>

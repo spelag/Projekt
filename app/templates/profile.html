@@ -22,7 +22,7 @@
                                         {% if friend %}
                                             {% if invites %}
                                                 <a type="button" class="btn btn-danger" href="{{url_for('removeFriend', friendName=user.username, friendID=user.id)}}">Remove Friend</a>
-                                                <a type="button" class="btn btn-outline-success ms-1">Accept Match</a>
+                                                <a type="button" class="btn btn-outline-success ms-1" href="{{url_for('acceptMatch', inviter=user.id)}}">Accept Match</a>
                                                 <a type="button" class="btn btn-outline-danger ms-1" href="{{url_for('declineInvite', invite=Invite.query.filter_by(inviter=user.id).first().id)}}">Decline Match</a>
                                                 <a class="btn btn-outline-warning ms-1" href="{{url_for('chat', inviteID=Invite.query.filter_by(invitee=user.id).first().id)}}">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chat-dots" viewBox="0 0 16 16">

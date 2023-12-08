@@ -8,60 +8,26 @@
     <section style="background-color: #eee;">
         <div class="container py-5">
             <div class="row">
-                <div class="col-lg-4">
-                    <div class="card mb-4">
-                        <div class="card-body text-center">
-                            <img src="/static/img/noj.jpg" alt="avatar"
-                                class="rounded-circle img-fluid" style="width: 150px;">
-                            <h5 class="my-3">{{current_user.username}}</h5>
-                            <p class="text-muted mb-1">User since:</p>
-                            <p class="text-muted mb-4">{{current_user.join_date.day}}. {{current_user.join_date.month}}. {{current_user.join_date.year}}</p>
-                            <div class="d-flex justify-content-center mb-2">
-                                <button type="submit" form="settings" class="btn btn-danger">Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <form class="col-lg-8" id="settings" action="/editprofile" method="post">
+                <form class="col-lg-8" id="settings" action="/editmatch/{{match.id}}" method="post">
                     <div class="card mb-4">
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <p class="mb-0">Username</p>
-                                </div>
-                                <div class="col-sm-9">
-                                    <p class="text-muted mb-0">{{current_user.username}}</p>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3">
-                                <p class="mb-0">Email</p>
-                                </div>
-                                <div class="col-sm-9">
-                                <p class="text-muted mb-0">{{current_user.email}}</p>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3">
-                                    <p class="mb-0">Age group</p>
+                                    <p class="mb-0">Match Location</p>
                                 </div>
                                 <div class="col-sm-9">
                                     <p class="text-muted my-0">
                                         <div class="form-group">
-                                            <select name="age" class="form-control">
-                                                <option selected>{{current_user.age_group}}</option>
-                                                <option>13-19</option>
-                                                <option>20-29</option>
-                                                <option>30-49</option>
-                                                <option>50-59</option>
-                                                <option>60-69</option>
-                                                <option>70-79</option>
-                                                <option>80-89</option>
-                                                <option>90-99</option>
-                                                <option>100+</option>
+                                            <select name="locationDropdown" class="form-control" data-live-search="true">
+                                                <option selected>{{current_user.age_group}}</option>                                                
+                                                {% for i in locations %}
+                                                    <option>{{i}}</option>
+                                                {% endfor %}
+                                                <option>Other (specify bellow)</option>
                                             </select>
+                                            <p class="text-muted mb-0">
+                                                <input name="location" class="form-control" value="Other"/>
+                                            </p>
                                         </div>
                                     </p>
                                 </div>
@@ -69,38 +35,49 @@
                             <hr class="mt-0">
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <p class="mb-0">Location</p>
+                                    <p class="mb-0">Tag</p>
                                 </div>
-                                <div class="col-sm-9">
-                                    <p class="text-muted mb-0">
-                                        <input name="location" class="form-control" value="{{current_user.location}}"/>
-                                    </p>
+                                <!-- naredi isto kokr location sam za tag -->
+                            </div>
+                            <hr class="mt-0">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Sets</p>
                                 </div>
+                                <select name="sets" class="form-control">
+                                    <option selected>{{match.setiCount}}</option>
+                                    {% if match.setiCount == 3 %}
+                                        <option>5</option>
+                                    {% elif match.setiCount == 5 %}
+                                        <option>3</option>
+                                    {% endif %}
+                                </select>
                             </div>
                             <hr>
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <p class="mb-0">Experience</p>
+                                    <p class="mb-0">Notes (any note you wish to leave for your opponent)</p>
                                 </div>
                                 <div class="col-sm-9">
                                     <p class="text-muted mb-0">
                                         <div class="form-group">
-                                            <select name="experience" class="form-control">
-                                                <option selected>{{current_user.experience}}</option>
-                                                <option>Beginner</option>
-                                                <option>Intermediate</option>
-                                                <option>Advanced</option>
-                                                <option>Professional</option>
-                                            </select>
+                                            <p class="text-muted mb-0">
+                                                <input name="note" class="form-control" value="{{match.notes}}"/>
+                                            </p>
                                         </div>
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-sm-3 mb-3">
+                            <button type="submit" form="settings" class="btn btn-danger">Save</button>
+                        </div>
+                    </div>
                     <div class="alert alert-warning" role="alert" data-mdb-color="warning">
                         <i class="fa fa-exclamation-triangle"></i>
-                        Any information you enter will be publicly available on your profile.
+                        Your opponent will also be able to see any changes you make.
                     </div>
                 </div>
             </div>

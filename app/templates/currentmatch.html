@@ -15,15 +15,11 @@
                                 <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp" alt="avatar"
                                     class="rounded-circle img-fluid" style="width: 150px;">
                                 <h5 class="my-3">{{u1.username}} vs {{u2.username}}</h5>
-                                <p class="text-muted mb-1">Match date:</p>
-                                <p class="text-muted mb-4">{{match.matchDate.day}}. {{match.matchDate.month}}. {{match.matchDate.year}}</p>
                                 <div class="d-flex justify-content-center mb-2">
-                                    {% if match.winner == current_user.username %}
-                                        <a type="button" class="btn btn-danger" href="{{url_for('newMatch', opponent=User.query.filter(User.username == match.loser).first().id)}}">Rematch</a>
-                                    {% elif match.loser == current_user.username %}
-                                        <a type="button" class="btn btn-danger" href="{{url_for('newMatch', opponent=User.query.filter(User.username == match.winner).first().id)}}">Rematch</a>
-                                    {% endif %}
-                                    </div>
+                                    <a type="button" class="btn btn-outline-primary" href="/editmatch/{{match.id}}">Edit</a>
+                                    <a type="button" class="btn btn-outline-secondary" href="/match/{{match.id}}/{{match.unique}}">Start</a>
+                                        <!-- kksn knof -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -32,7 +28,7 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        <p class="mb-0">Match location</p>
+                                        <p class="mb-0">Match Location</p>
                                     </div>
                                     <div class="col-sm-9">
                                         <p class="text-muted mb-0">{{match.location}}</p>

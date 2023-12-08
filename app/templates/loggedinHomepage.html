@@ -27,10 +27,11 @@
                     </tr>
                     </thead>
                     <tbody>
-                        {% for i in matches %}
+                        {% for j in matches %}
+                            {% for i in j %}
                             <tr>
                                 {% if i.friendship.friendA == current_user.id %}
-                                <th scope="row">{{User.query.get(i.friendship.friendA).username}}</th>
+                                <th scope="row">{{User.query.get(i.friendship.friendB).username}}</th>
                                 <th>
                                     <a class="button" href="{{url_for('profile', username=User.query.get(i.friendship.friendB).username, userID=i.friendship.friendB)}}">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
@@ -57,6 +58,7 @@
                                     </a>
                                 </th>
                             </tr>
+                            {% endfor %}
                         {% endfor %}
                     </tbody>
                 </table>
