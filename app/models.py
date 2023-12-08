@@ -85,13 +85,14 @@ class FriendRequest(db.Model):
     requester = db.Column(db.Integer)
     requested = db.Column(db.Integer)
 
-    # requested = db.relationship('User', back_populates='inboundRequests', lazy=True)
-    # requester = db.relationship('User', back_populates='outboundRequests', lazy=True)
-
 class Match(db.Model):
     __tablename__ = 'matches'
     id = db.Column(db.Integer, primary_key=True)
     unique = db.Column(db.String(10), nullable=False)
+    notes = db.Column(db.Text())
+    timeSuggestion = db.Column(db.String(60))
+    timeConfirmA = db.Column(db.Boolean)
+    timeConfirmB = db.Column(db.Boolean)
     # winnerPoints = db.Column(db.String(10))
     # loserPoints = db.Column(db.String(10))
     # sets = db.Column(db.Integer)
@@ -102,10 +103,18 @@ class Match(db.Model):
     
     # foreign keys ig
     friendship_id = db.Column(db.Integer, db.ForeignKey('friendships.id'))
+    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'))
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     
     # the two friends playing the match
-    friendship = db.relationship('Friendship', back_populates='matches', lazy=True)
-    
+    friendship = db.relationship('Friendship', back_populates='matches')
+
+    # tag the match
+    tag = db.relationship('Tag', back_populates='matches')
+
+    # the location
+    location = db.relationship('Location', back_populates='matches')
+
     # the winner and the loser
     winner = db.Column(db.Integer)
     loser = db.Column(db.Integer)
@@ -116,6 +125,19 @@ class Match(db.Model):
     # the sets played within this match
     sets = db.relationship('Set', back_populates='match', lazy=True)
 
+class Tag(db.Model):
+    __tablename__ = 'tags'
+    id = db.Column(db.Integer, primary_key=True)
+    tag = db.Column(db.String(60))
+
+    matches = db.relationship('Match', back_populates='tag')
+
+class Location(db.Model):
+    __tablename__ = 'locations'
+    id = db.Column(db.Integer, primary_key=True)
+    location = db.Column(db.String(60))
+
+    matches = db.relationship('Match', back_populates='location')
 
 class Invite(db.Model):
     id = db.Column(db.Integer, primary_key=True)

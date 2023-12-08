@@ -13,10 +13,20 @@ logged in frontpage
 - boljsi opis friends(also add friends)
 
 dodej na invites da lahko prides do profila osebe
+accept decline match request na profile
+popup za remove friend
+
+current matches
+statistics
+zamenjaj sliko ce je copyright
+
+
+<a class="btn btn-primary" href="{{url_for('match', matchID=matchID, unique=unique)}}">Proceed to the Match</a>
+const matchID = `{{matchID}}`;
 
 ffs chat query
 href="{{url_for('chat', matchID=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().id, unique=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().unique)}}"
-href="{{url_for('declineInvite', invite=current_user.invites[i].id)}}"
 
-href="{{url_for('chat', matchID=current_user.outboundInvites[i].id, unique=current_user.outboundInvites[i].unique)}}"
+
+
 href="{{url_for('declineInvite', invite=current_user.outboundInvites[i].invite)}}"
