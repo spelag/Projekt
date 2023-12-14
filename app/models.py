@@ -28,8 +28,9 @@ class User(db.Model, UserMixin):
     join_date = db.Column(db.DateTime(timezone=True), default=datetime.now)
     experience = db.Column(db.String(12))
     age_group = db.Column(db.String(6))
-    location = db.Column(db.String(120))
 
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
+    location = db.relationship('Location', back_populates='users')
     # inboundRequests = db.relationship('FriendRequest', back_populates='requested', lazy=True)
     # outboundRequests = db.relationship('FriendRequest', back_populates='requester', lazy=True)
     # inboundInvites = db.relationship('Match', back_populates='invitee', lazy=True)
@@ -119,9 +120,6 @@ class Match(db.Model):
     winner = db.Column(db.Integer)
     loser = db.Column(db.Integer)
 
-    # the invite before the match
-    invite = db.relationship('Invite', back_populates='match', lazy=True)
-
     # the sets played within this match
     sets = db.relationship('Set', back_populates='match', lazy=True)
 
@@ -137,15 +135,13 @@ class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     location = db.Column(db.String(60))
 
+    users = db.relationship('User', back_populates='location')
     matches = db.relationship('Match', back_populates='location')
 
 class Invite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     inviter = db.Column(db.Integer)
     invitee = db.Column(db.Integer)
-
-    match = db.relationship('Match', back_populates='invite', lazy=True)
-    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'))
 
 class Set(db.Model):
     id = db.Column(db.Integer, primary_key=True)

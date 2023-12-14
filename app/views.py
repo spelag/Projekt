@@ -28,11 +28,6 @@ def index():
 def login():
     return render_template('login.html')
 
-@app.route('/notifications')
-def notifications():
-    session['url'] = url_for('notifications')
-    return render_template('notifications.html')
-
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
     if request.method == "GET":
@@ -79,9 +74,16 @@ def signin():
         return redirect(url_for('login'))
 
 @app.route('/logout')
+@login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    session['url'] = url_for('notifications')
+    return render_template('notifications.html')
 
 def generate_unique_code(length):
     while True:
@@ -95,14 +97,16 @@ def generate_unique_code(length):
 matches = []
 
 @app.route('/match/<matchID>/<unique>')
+@login_required
 def match(matchID, unique):
-    u1 = Match.query.filter_by(id=matchID).first().invitee
-    u2 = Match.query.filter_by(id=matchID).first().inviter
-    u1 = User.query.filter_by(id=u1).first()
-    u2 = User.query.filter_by(id=u2).first()
-    if current_user.id != u1.id and current_user.id != u2.id:
+    match = Match.query.get(matchID)
+
+    if match.friendship.friendB != current_user.id and match.friendship.friendA != current_user.id:
         return redirect(url_for('index'))
-    return render_template('match.html', u1=u1, u2=u2, unique=unique, u1Score=0, u2Score=0, matchID=matchID)
+
+    u1 = User.query.get(match.friendship.friendA)
+    u2 = User.query.get(match.friendship.friendB)
+    return render_template('matches/match.html', u1=u1, u2=u2, unique=unique, u1Score=0, u2Score=0, matchID=matchID)
 
 @socketio.on('score')
 def score(data):
@@ -181,59 +185,6 @@ def leave(data):
 @socketio.on('changeResult')
 def changeResult(data):
     emit('changeResult', room=data["matchID"])
-
-@app.route('/acceptmatch/<inviter>')
-def acceptMatch(inviter):
-    opponent = User.query.get(inviter)
-    invite = Invite.query.filter(Invite.invitee==current_user.id, Invite.inviter==opponent.id).first()
-    friendship = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id), or_(Friendship.friendA==opponent.id, Friendship.friendB==opponent.id)).first()
-
-    if invite == None or current_user.id != invite.invitee:
-        return redirect(url_for('index'))
-
-    unique = generate_unique_code(10)
-    matches.append(unique)
-    match = Match()
-    match.unique = unique
-    match.invite = [invite]
-    match.started = True
-    match.setiCount = 3
-    db.session.add(match)
-    friendship.matches.append(match)
-    db.session.delete(invite)
-    db.session.commit()
-    return redirect(url_for('oneMatch', id=match.id))
-
-@app.route('/newmatch/<opponent>')
-def newMatch(opponent):
-    opponent = User.query.get(opponent)
-
-    invite = Invite.query.filter(or_(Invite.inviter==current_user.id, Invite.invitee==current_user.id), or_(Invite.inviter==opponent.id, Invite.invitee==opponent.id)).first()
-    if invite:
-        flash("Such invite already exists.")
-        return redirect(url_for('invites'))
-
-    invite = Invite(
-        inviter = current_user.id,
-        invitee = opponent.id
-    )
-    db.session.add(invite)
-    db.session.commit()
-    print(session)
-    print(current_user)
-    if 'url' in session:
-        return redirect(session['url'])
-    return redirect(url_for('allusers', who="friends"))
-
-    # m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
-    # if (not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2) or (m2.started == False or Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first().started == False):
-    #     return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
-    # elif m2:
-    #     match = m2
-    #     unique = match.unique        
-    # else:
-    #     match = Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first()
-    #     unique = match.unique
     # return redirect(url_for('chat', matchID=match.id, unique=unique))
 
 @socketio.on('save')
@@ -255,23 +206,76 @@ def save(data):
     db.session.commit()
     emit("leave", room=data["room"])
 
+@app.route('/newmatch/<opponent>')
+@login_required
+def newMatch(opponent):
+    opponent = User.query.get(opponent)
+
+    friendship = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id), or_(Friendship.friendA==opponent.id, Friendship.friendB==opponent.id)).first()
+    for i in friendship.matches:
+        if i.winner == None:
+            flash("Such match already exists.")
+            return redirect(url_for('oneMatch', id=i.id))
+
+    invite = Invite.query.filter(or_(Invite.inviter==current_user.id, Invite.invitee==current_user.id), or_(Invite.inviter==opponent.id, Invite.invitee==opponent.id)).first()
+    if invite:
+        flash("Such invite already exists.")
+        return redirect(url_for('invites'))
+
+    invite = Invite(
+        inviter = current_user.id,
+        invitee = opponent.id
+    )
+    db.session.add(invite)
+    db.session.commit()
+
+    if 'url' in session:
+        return redirect(session['url'])
+    return redirect(url_for('invites'))
+
+    # m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
+    # if (not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2) or (m2.started == False or Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first().started == False):
+    #     return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
+    # elif m2:
+    #     match = m2
+    #     unique = match.unique        
+    # else:
+    #     match = Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first()
+    #     unique = match.unique
+
+@app.route('/acceptmatch/<inviter>')
+@login_required
+def acceptMatch(inviter):
+    opponent = User.query.get(inviter)
+    invite = Invite.query.filter(Invite.invitee==current_user.id, Invite.inviter==opponent.id).first()
+    friendship = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id), or_(Friendship.friendA==opponent.id, Friendship.friendB==opponent.id)).first()
+
+    if invite == None or current_user.id != invite.invitee:
+        return redirect(url_for('index'))
+
+    unique = generate_unique_code(10)
+    matches.append(unique)
+    match = Match()
+    match.unique = unique
+    match.started = True
+    match.setiCount = 3
+    db.session.add(match)
+    friendship.matches.append(match)
+    db.session.delete(invite)
+    db.session.commit()
+    return redirect(url_for('oneMatch', id=match.id))
+
 @app.route('/pastmatches')
+@login_required
 def pastmatches():
     session['url'] = url_for('pastmatches')
-    a = (db.session.query(User).where(User.id == current_user.id)).first()
-    b = (select(Match).where(Match.winner == current_user.id).where(Match.loser == current_user.id))
-    d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate.desc()))
-    for i in d:
-        print(i)
-        print(i.winner)
-    print(a)
-    print(a.friends)
-    print(d.all())
 
-    # allInviter=Match.query.filter_by(winner=current_user.username), allInvitee=Match.query.filter_by(loser=current_user.username)
+    d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate.desc()))
+
     return render_template('pastmatches.html', user=current_user, User=User, matches=d)
 
 @app.route('/pastmatches/sort/<what>/<type>')
+@login_required
 def pastmatchesSort(what, type):
     session['url'] = url_for('pastmatchesSort', what=what, type=type)
     if what == "date":
@@ -288,6 +292,7 @@ def pastmatchesSort(what, type):
     return render_template('pastmatches.html', user=current_user, User=User, matches=d)
 
 @app.route('/pastmatches/export')
+@login_required
 def export():
     matches = Match.query.filter(or_(Match.winner == current_user.username, Match.loser == current_user.username))
     with open('export.csv', 'w') as csvfile:
@@ -300,6 +305,7 @@ def export():
     return send_file('../export.csv', mimetype='type/csv', download_name=fName, as_attachment=True)
 
 @app.route('/match/<id>')
+@login_required
 def oneMatch(id):
     session['url'] = url_for('oneMatch', id=id)
     match = Match.query.filter(Match.id == id).first()
@@ -339,6 +345,7 @@ def message(data):
     send({"name": data["who"], "message": data["message"]}, to=data["room"])
 
 @app.route('/invites')
+@login_required
 def invites():
     session['url'] = url_for('invites')
     invites = current_user.get_inboundInvites()
@@ -346,6 +353,7 @@ def invites():
     return render_template('invites.html', invitesLen=len(invites), invitedLen=len(invited), invites=invites, invited=invited, Invite=Invite)
 
 @app.route('/decline/<invite>')
+@login_required
 def declineInvite(invite):
     invite = Invite.query.get(invite)
     db.session.delete(invite)
@@ -355,6 +363,7 @@ def declineInvite(invite):
     return redirect(url_for('invites'))
 
 @app.route('/profile/<username>/<userID>')
+@login_required
 def profile(username, userID):
     session['url'] = url_for('profile', username=username, userID=userID)
     user = User.query.filter_by(id=userID).first()
@@ -375,23 +384,33 @@ def profile(username, userID):
     if user in invites:
         return render_template('profile.html', loggedin=True, user=user, friend=True, invites=True, Invite=Invite)
     invited = current_user.get_outboundInvites()
-    print(invited)
     if user in invited:
         return render_template('profile.html', loggedin=True, user=user, friend=True, invited=True, Invite=Invite)
     return render_template('profile.html', loggedin=True, user=user, friend=True, invites=False, invited=False, Invite=Invite)
 
 @app.route('/editprofile', methods=["GET", "POST"])
+@login_required
 def editProfile():
     if request.method == "GET":
         return render_template('editProfile.html')
     info = request.form
     current_user.age_group = info['age']
-    current_user.location = info['location']
     current_user.experience = info['experience']
+    # changing location
+    prev = current_user.location
+    if prev != None:
+        prev.users.remove(current_user)
+    loc = Location.query.filter_by(location=info['location']).first()
+    if loc == None:
+        loc = Location()
+        loc.location = info['location']
+        db.session.add(loc)
+    loc.users.append(current_user)
     db.session.commit()
     return redirect(url_for('profile', username=current_user.username, userID=current_user.id))
 
 @app.route('/editmatch/<matchID>', methods=["GET", "POST"])
+@login_required
 def editMatch(matchID):
     match = Match.query.get(matchID)
     if match == None:
@@ -400,8 +419,16 @@ def editMatch(matchID):
         locations = Location.query.all()
         return render_template('editCurrentmatch.html', locations=locations, match=match)
     info = request.form
-    print(info['location'])
-    # match.location = info['location']
+    # change location
+    if info['locationDropdown'] == "Add New Location":
+        loc = Location.query.filter_by(location=info['location']).first()
+        if loc == None:
+            loc = Location()
+            loc.location = info['location']
+            db.session.add(loc)
+        match.location = loc
+    else:
+        match.location = Location.query.filter_by(location=info['locationDropdown']).first()
     match.tag
     match.notes = info['note']
     match.timeSuggestion
@@ -409,6 +436,7 @@ def editMatch(matchID):
     return redirect(url_for('oneMatch', id=match.id))
 
 @app.route('/members/<who>')
+@login_required
 def allusers(who):
     session['url'] = url_for('allusers', who=who)
     btnA = "secondary"
@@ -439,33 +467,26 @@ def allusers(who):
         userCount = allUsers.count()
         btnA = "primary"
     print(requested, allUsers)
-    return render_template('allusers.html', Invite=Invite, userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR, friends=friends, requested=requested, requester=requester, inInvites=inInvites, outInvites=outInvites)
+    return render_template('users/allusers.html', Invite=Invite, userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR, friends=friends, requested=requested, requester=requester, inInvites=inInvites, outInvites=outInvites)
 
-@app.route('/addfriend/<friendName>/<friendID>')
-def addFriend(friendName, friendID):
-    friend = Friendship.query.filter_by(friendA=current_user.id, friendB=friendID).first()
-    if FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first():
-        db.session.delete(FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first())
-    else:
-        db.session.delete(FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first())
-    if friend:
-        flash("You are already friends with this user.")
-        return redirect(url_for('allusers', who="friends"))
-    friend = Friendship(
-        friendB = current_user.id,
-        friendA = friendID)
-    db.session.add(friend)
+@app.route('/friendrequest/<friendName>/<friendID>')
+@login_required
+def friendRequest(friendName, friendID):
+    request = FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first()
+    if request:
+        flash("A friend request has already been sent.")
+        if 'url' in session:
+            return redirect(session['url'])
+        return redirect(url_for('allusers', who="all"))
+    friendRequest = FriendRequest(
+        requester = current_user.id,
+        requested = friendID)
+    db.session.add(friendRequest)
     db.session.commit()
-    return redirect(url_for('profile', username=friendName, userID=friendID))
-
-@app.route('/removefriend/<friendName>/<friendID>')
-def removeFriend(friendName, friendID):
-    a = (Friendship.query.filter_by(friendA=current_user.id, friendB=friendID).first())
-    if not a:
-        a = Friendship.query.filter_by(friendB=current_user.id, friendA=friendID).first()
-    db.session.delete(a)
-    db.session.commit()
-    return redirect(url_for('profile', username=friendName, userID=friendID))
+    flash("Friend request sent successfully.")
+    if 'url' in session:
+        return redirect(session['url'])
+    return redirect(url_for('allusers', who="all"))
 
 @app.route('/removerequest/<friendID>')
 def removeRequest(friendID):
@@ -476,17 +497,36 @@ def removeRequest(friendID):
     db.session.commit()
     return redirect(url_for('allusers', who="friendrequests"))
 
-@app.route('/friendrequest/<friendName>/<friendID>')
+@app.route('/addfriend/<friendName>/<friendID>')
 @login_required
-def friendRequest(friendName, friendID):
-    request = FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first()
-    if request:
-        flash("A friend request has already been sent.")
-        return redirect(url_for('allusers', who="all"))
-    friendRequest = FriendRequest(
-        requester = current_user.id,
-        requested = friendID)
-    db.session.add(friendRequest)
+def addFriend(friendName, friendID):
+    friend = Friendship.query.filter_by(friendA=current_user.id, friendB=friendID).first()
+    if friend:
+        flash("You are already friends with this user.")
+        if 'url' in session:
+            return redirect(session['url'])
+        return redirect(url_for('allusers', who="friends"))
+    request = FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first()
+    if not request:
+        if 'url' in session:
+            return redirect(session['url'])
+        return redirect(url_for('allusers', who="friendrequests"))
+    db.session.delete(request)
+    friend = Friendship(
+        friendB = current_user.id,
+        friendA = friendID)
+    db.session.add(friend)
     db.session.commit()
-    flash("Friend request sent successfully.")
-    return redirect(url_for('allusers', who="all"))
+    return redirect(url_for('profile', username=friendName, userID=friendID))
+
+@app.route('/removefriend/<friendName>/<friendID>')
+@login_required
+def removeFriend(friendName, friendID):
+    a = (Friendship.query.filter_by(friendA=current_user.id, friendB=friendID).first())
+    if not a:
+        a = Friendship.query.filter_by(friendB=current_user.id, friendA=friendID).first()
+    db.session.delete(a)
+    db.session.commit()
+    if 'url' in session:
+        return redirect(session['url'])
+    return redirect(url_for('profile', username=friendName, userID=friendID))

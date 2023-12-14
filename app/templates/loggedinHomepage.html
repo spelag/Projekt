@@ -6,30 +6,31 @@
 {% block pagetitle %}Welcome to PingPonger{% endblock %}
 {% block content %}
 <!-- Page Content-->
-     <div class="container px-4 px-lg-5">
+    <div class="container">
         <!-- Heading Row-->
-        <div class="row gx-4 gx-lg-5 align-items-center my-5">
+        <div class="row align-items-center my-5">
             <div class="col-lg-7"><img class="img-fluid rounded mb-4 mb-lg-0" height="100px" src="/static/img/loparja.png" alt="..." /></div>
             <div class="col-lg-5">
-                {% if length == 0 %}
-                <div class="text-center">
-                    <h3>You dont't have any active matches.</h3>
-                    <a class="btn btn-outline-primary" href="/members/friends">Invite a friend to a match</a>
-                </div>
-                {% else %}
-                <div class="table-wrapper-scroll-y my-custom-scrollbar">
-                <table class="table table-striped table-hover">
-                    <thead>
-                    <tr>
-                        <th scope="col">Opponent</th>
-                        <th scope="col"></th>
-                        <th scope="col"></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        {% for j in matches %}
-                            {% for i in j %}
-                            <tr>
+                <div class="row my-5">
+                    {% if length == 0 %}
+                    <div class="text-center">
+                        <h3>You dont't have any active matches.</h3>
+                        <a class="btn btn-outline-primary" href="/members/friends">Invite a friend to a match</a>
+                    </div>
+                    {% else %}
+                    <div class="table-wrapper-scroll-y my-custom-scrollbar">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Opponent</th>
+                                    <th scope="col"></th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for j in matches %}
+                                {% for i in j %}
+                                <tr>
                                 {% if i.friendship.friendA == current_user.id %}
                                 <th scope="row">{{User.query.get(i.friendship.friendB).username}}</th>
                                 <th>
@@ -64,19 +65,25 @@
                 </table>
                 {% endif %}
                 </div>
-                <div>
-                    <h1 class="font-weight-light">Work in progress</h1>
-                    <p>This part of the page is still being built.</p>
-                    <a class="btn btn-primary" href="#!">View Statistics!</a>
+                <div class="row">
+                    <div class="col text-center">
+                        <h1 class="font-weight-light">Work in progress</h1>
+                        <p>This part of the page is still being built.</p>
+                        <a class="btn btn-primary" href="#!">View Statistics!</a>
+                    </div>
                 </div>
             </div>
         </div>
-        <!-- Call to Action-->
-        <div class="card text-white bg-secondary my-5 py-4 text-center">
-            <div class="card-body"><p class="text-white m-0">With PingPonger you can invite friends to matches, chat with them and save your results. You can inspect your previous matches and even export your results.</p></div>
+        <!-- Place for general description/any special notices (eg. maintenence) -->
+        <div class="row justify-content-center gx-4 gx-lg-5 my-5">
+            <div class="col-md-12">
+                <div class="card text-white bg-secondary my-5 py-4 text-center">
+                    <div class="card-body"><p class="text-white m-0">With PingPonger you can invite friends to matches, chat with them and save your results. You can inspect your previous matches and even export your results.</p></div>
+                </div>
+            </div>
         </div>
         <!-- Content Row-->
-        <div class="row gx-4 gx-lg-5">
+        <div class="row justify-content-center gx-4 gx-lg-5">
             <div class="col-md-4 mb-5">
                 <div class="card h-100">
                     <div class="card-body">

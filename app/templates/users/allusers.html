@@ -43,7 +43,7 @@
                                 <th scope="row">{{allUsers[i].username}}</th>
                                 <td>{{allUsers[i].experience}}</td>
                                 <td>{{allUsers[i].age_group}}</td>
-                                <td>{{allUsers[i].location}}</td>
+                                <td>{{allUsers[i].location.location}}</td>
                                 <td>{{allUsers[i].join_date.day}}. {{allUsers[i].join_date.month}}. {{allUsers[i].join_date.year}}</td>
                                 <td>
                                     <a class="button" href="{{url_for('profile', username=allUsers[i].username, userID=allUsers[i].id)}}">

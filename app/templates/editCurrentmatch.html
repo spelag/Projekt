@@ -12,25 +12,23 @@
                     <div class="card mb-4">
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-sm-3">
-                                    <p class="mb-0">Match Location</p>
-                                </div>
-                                <div class="col-sm-9">
-                                    <p class="text-muted my-0">
-                                        <div class="form-group">
-                                            <select name="locationDropdown" class="form-control" data-live-search="true">
-                                                <option selected>{{current_user.age_group}}</option>                                                
-                                                {% for i in locations %}
-                                                    <option>{{i}}</option>
-                                                {% endfor %}
-                                                <option>Other (specify bellow)</option>
-                                            </select>
-                                            <p class="text-muted mb-0">
-                                                <input name="location" class="form-control" value="Other"/>
-                                            </p>
-                                        </div>
-                                    </p>
-                                </div>
+                                <p class="mb-0">Match Location</p>
+                            </div>
+                            <div class="row">
+                                <p class="text-muted my-0">
+                                    <div class="form-group">
+                                        <select name="locationDropdown" class="form-control" data-live-search="true">
+                                            <option>Add New Location</option>
+                                            <option selected>{{current_user.age_group}}</option>                                                
+                                            {% for i in locations %}
+                                                <option>{{i.location}}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <p class="text-muted mb-0">
+                                            <input name="location" class="form-control" value="Other"/>
+                                        </p>
+                                    </div>
+                                </p>
                             </div>
                             <hr class="mt-0">
                             <div class="row">

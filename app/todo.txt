@@ -1,9 +1,4 @@
-pastmatches.html une slikice za sort sprement
-pastmatches more info slikice
-preveri zakaj winner pa loser points 0000
-- ker so bli sam seti spremenjeni?
-- mogoc spremen database??
-nared da je lah sam en username
+pastmatches.html une slikice za sort sprement (narjen sam uredit je treba)
 import/export the results
 frontpage not logged in
 - bottom about us etc
@@ -12,21 +7,25 @@ frontpage not logged in
 logged in frontpage
 - boljsi opis friends(also add friends)
 
+landing page change name & sign up instead of submit & clean it up ffs
+
 dodej na invites da lahko prides do profila osebe
-accept decline match request na profile
 popup za remove friend
 
-current matches
 statistics
 zamenjaj sliko ce je copyright
 zamenjaj slikco pr match profile
 zamenjaj slikco pr profiles???
 
-make it so that you can add tags and locations
+make it so that you can add tags
+make locations smoother
 make chat available even after accepting match
 
 make matches na homepagu prettier pa explaini kako deluje
 
+figure out kako bojo matches sploh delval s seti
+
+socketio flowcharts
 
 <a class="btn btn-primary" href="{{url_for('match', matchID=matchID, unique=unique)}}">Proceed to the Match</a>
 const matchID = `{{matchID}}`;
