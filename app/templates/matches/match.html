@@ -6,56 +6,43 @@
 {% block pagetitle %}{{u1.username}} vs {{u2.username}}{% endblock %}
 {% block content %}
 <div class="container-fluid p-3">
-	<div class="row text-center" id="top" style="display: none;"></div>
-	<div id="gameview" class="row">
-		<div class="col-md-3 text-end">
+	<div class="row" id="top" style="display: none;"></div>
+	<div id="gameview" class="row justify-content-between">
+		<div class="col-md-1 text-end">
             <img id="turn1" src="/static/img/lopar.png" alt="Pingpong racket: Your turn" style="visibility: hidden;">
 		</div>
-		<div class="col-md-2 text-end">
-            <h1 class="text-end" id="u1">{{u1.username}}</h1>
+		<div class="col-md-4 text-center">
+            <h1 id="u1">Waiting for {{u1.username}}...</h1>
             <!-- <img src="/static/img/{{u1Score}}.png", width="500", alt="score"> -->
 			<h1 class="points__team" id="u1score" style="font-size: min(20vw, 30vh)"></h1>
 			<h3 class="points__team" id="u1scoreSet" style="font-size: min(5vw, 7.5vh)"></h3>
-			<div class="d-flex justify-content-end">
+			<div class="d-flex justify-content-around my-3">
 				<button class="btn btn-primary" style="display: none;" id="addU1" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractU1" type="button">-</button>
 			</div>
-			<div class="d-flex justify-content-end">
+			<div class="d-flex justify-content-around my-3">
 				<button class="btn btn-primary" style="display: none;" id="addsetU1" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractsetU1" type="button">-</button>
 			</div>
 		</div>
-		<div class="col-md-2 d-flex justify-content-center">
-			<span id="iks" class="points__versus d-flex justify-content-center">&#215;</span>
-		</div>
-		<div class="col-md-2 text-beginning">
-            <h1 id="u2">{{u2.username}}</h1>
+		<div class="col-md-4 text-center">
+            <h1 id="u2">Waiting for {{u2.username}}...</h1>
             <h1 class="points__team" id="u2score" style="font-size: min(20vw, 30vh)"></h1>
             <h3 class="points__team" id="u2scoreSet" style="font-size: min(5vw, 7.5vh)"></h3>
-			<div class="d-flex justify-content-beginning">
+			<div class="d-flex justify-content-around my-3">
 				<button class="btn btn-primary" style="display: none;" id="addU2" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractU2" type="button">-</button>
 			</div>
-			<div class="d-flex justify-content-beginning">
+			<div class="d-flex justify-content-around my-3">
 				<button class="btn btn-primary" style="display: none;" id="addsetU2" type="button">+</button>
 				<button class="btn btn-primary" style="display: none;" id="subtractsetU2" type="button">-</button>
 			</div>
 		</div>
-		<div class="col-md-3">
+		<div class="col-md-1">
             <img id="turn2" src="/static/img/lopar.png" alt="Pingpong racket: Your turn" style="visibility: hidden;">
 		</div>
 	</div>
 	<div class="row d-flex justify-content-evenly"></div>
-		<div id="settingsi" class="col-md text-center">
-			<!-- <h4>Settings</h4>
-			<p>Change the number of sets you will play.</p>
-			<div class="dropdown d-flex justify-content-center">
-				<select id="seti" class="form-control w-50 text-center">
-					<option value="3">3</option>
-					<option value="5">5</option>
-				</select>
-			</div>
-		</div> -->
 		<div id="confirm" style="display: none;" class="col-md text-center">
 			<a class='btn btn-success' id="confirmResult">Confirm results</a>
 			<a class='btn btn-danger' id="declineConfirm">Cancel</a>
@@ -68,9 +55,11 @@
 	</div>
 </div>
 <script>
-	const current_user = `{{current_user.username}}`;
-	const u1 = `{{u1.username}}`;
-	const u2 = `{{u2.username}}`;
+	const current_user = `{{current_user.id}}`;
+	const u1 = `{{u1.id}}`;
+	const u2 = `{{u2.id}}`;
+	const u1name = `{{u1.username}}`;
+	const u2name = `{{u2.username}}`;
 	const matchID = `{{matchID}}`
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>

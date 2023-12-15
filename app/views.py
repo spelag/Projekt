@@ -164,23 +164,42 @@ def setiChange(data):
         readyUsers[data["matchID"]] = []
     emit('setiChange', data, room=data['matchID'])
 
+def checkIfReady(matchID):
+    match = Match.query.get(matchID)
+    if str(match.friendship.friendA) in readyUsers[str(matchID)] and str(match.friendship.friendB) in readyUsers[str(matchID)]:
+        return True
+    return False
+
+# triggered when a user joins
+# saves the room to session, and adds it to readyUsers if not already there
+# adds user to readyUsers and makes them join the room
+# checks if both opponents are present, if they are emits begin (game start)
+# emits join to change the waiting for text
 @socketio.on('join')
 def join(data):
+    session['room'] = data["room"]
     if data["room"] not in readyUsers:
         readyUsers[data["room"]] = []
-    join_room(data['room'])
+    readyUsers[data["room"]].append(data["user"])
+    join_room(data["room"])
+    emit('join', {"readyUsers": readyUsers[data["room"]]}, room=data["room"])
+    if checkIfReady(data["room"]):
+        emit('begin', room=data["room"])
+    print(readyUsers)
 
-@socketio.on('leave')
-def leave(data):
-    leave_room(data['room'])
-    if readyUsers[data['room']][0] == data['user']:
-        readyUsers[data['room']][0] = readyUsers[data['room']][1]
-        readyUsers[data['room']].pop()
-    else:
-        readyUsers[data['room']].pop()
-    if len(readyUsers[data['room']]) == 0:
-        del readyUsers[data['room']]
-    return redirect(url_for('pastmatches'))
+# triggered when a user disconnects
+# makes the user leave the room and removes the user id from readyUsers for their room
+# if room is empty, it gets deleted
+# emits unjoin to change waiting for text
+@socketio.on('disconnect')
+def disconnect():
+    room = session.get('room')
+    session.pop("room")
+    readyUsers[room].remove(str(current_user.id))
+    emit('unjoin', {"readyUsers": readyUsers[room]}, room=room)
+    leave_room(room)
+    if len(readyUsers[room]) == 0:
+        del readyUsers[room]
 
 @socketio.on('changeResult')
 def changeResult(data):

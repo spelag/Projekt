@@ -2,8 +2,78 @@
     var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
 
     socket.on('connect', () => {
-        socket.emit('join', {"room": matchID})
+        socket.emit('join', {"room": matchID, "user": current_user})
     });
+
+    // handles the "waiting" text
+    socket.on('join', data => {
+        if (data["readyUsers"].includes(u1)) {
+            document.querySelector("#u1").innerHTML = `<h1>`+ u1name + `</h1>`
+        }
+        if (data["readyUsers"].includes(u2)) {
+            document.querySelector("#u2").innerHTML = `<h1>`+ u2name + `</h1>`
+        }
+    })
+
+    // handles the "waiting" text
+    socket.on('unjoin', data => {
+        console.log(`istg`)
+        console.log(data["readyUsers"].includes(u1))
+        if (data["readyUsers"].includes(u1) == false) {
+            document.querySelector("#u1").innerHTML = `<h1>Waiting for ` + u1name + `...</h1>`
+        }
+        if (data["readyUsers"].includes(u2) == false) {
+            document.querySelector("#u2").innerHTML = `<h1>Waiting for ` + u2name + `...</h1>`
+        }
+        document.querySelector('#addU1').disabled = true
+        document.querySelector('#addU2').disabled = true
+        document.querySelector('#subtractU1').disabled = true
+        document.querySelector('#subtractU2').disabled = true
+        document.querySelector('#addsetU1').disabled = true
+        document.querySelector('#addsetU2').disabled = true
+        document.querySelector('#subtractsetU1').disabled = true
+        document.querySelector('#subtractsetU2').disabled = true
+    })
+    
+    // socket.on('disconnect', () => {
+    //     console.log('torej to se pokaze')
+    //     socket.emit('leave', {"room": matchID, "user": current_user})
+    //     // document.querySelector("#top").innerHTML = `<h1>Results confirmed and saved.</h1>`
+    //     // document.querySelector('#u1scoreSet').style.display = "none"
+    //     // document.querySelector('#u2scoreSet').style.display = "none"
+    //     // document.querySelector("#u1").style.display = "none"
+    //     // document.querySelector("#u2").style.display = "none"
+    //     // document.querySelector("#iks").style.visibility = "hidden"
+    // })
+
+    // with both users there, the match begins
+    socket.on('begin', () => {
+        document.querySelector('#u1score').innerHTML = 0
+        document.querySelector('#u2score').innerHTML = 0
+        document.querySelector('#u1scoreSet').innerHTML = 0
+        document.querySelector('#u2scoreSet').innerHTML = 0
+        document.querySelector('#addU1').style.display = "block"
+        document.querySelector('#addU2').style.display = "block"
+        document.querySelector('#subtractU1').style.display = "block"
+        document.querySelector('#subtractU2').style.display = "block"
+        document.querySelector('#addsetU1').style.display = "block"
+        document.querySelector('#addsetU2').style.display = "block"
+        document.querySelector('#subtractsetU1').style.display = "block"
+        document.querySelector('#subtractsetU2').style.display = "block"
+        document.querySelector('#addU1').disabled = false
+        document.querySelector('#addU2').disabled = false
+        document.querySelector('#subtractU1').disabled = false
+        document.querySelector('#subtractU2').disabled = false
+        document.querySelector('#addsetU1').disabled = false
+        document.querySelector('#addsetU2').disabled = false
+        document.querySelector('#subtractsetU1').disabled = false
+        document.querySelector('#subtractsetU2').disabled = false
+        document.querySelector('#turn1').style.visibility = "visible"
+        turn = "1"
+        serva = 0
+        u1points = 0
+        u2points = 0
+    })
 
     socket.on('setiChange', data => {
         document.querySelector('#gumb').style.visibility = "visible";
@@ -11,82 +81,12 @@
         document.querySelector("#u1").innerHTML = u1
         document.querySelector("#u2").innerHTML = u2
     })
-
-    socket.on('leave', () => {
-        socket.emit('leave', {"room": matchID, "user":current_user})
-        document.querySelector("#top").innerHTML = `<h1>Results confirmed and saved.</h1>`
-        document.querySelector('#u1scoreSet').style.display = "none"
-        document.querySelector('#u2scoreSet').style.display = "none"
-        document.querySelector("#u1").style.display = "none"
-        document.querySelector("#u2").style.display = "none"
-        document.querySelector("#iks").style.visibility = "hidden"
-    })
-
-    socket.on('stopWait', () => {
-        waiting = false
-    })
-
-    socket.on('start', data => {
-        if (data.ready == false) {
-            if (data.user == u1) {
-                document.querySelector("#u1").innerHTML = data.user + " is ready."
-            }
-            else {
-                document.querySelector("#u2").innerHTML = data.user + " is ready."
-            }
-        }
-        else {
-            document.querySelector("#u1").innerHTML = u1
-            document.querySelector("#u2").innerHTML = u2
-            document.querySelector('#u1score').innerHTML = 0
-            document.querySelector('#u2score').innerHTML = 0
-            document.querySelector('#u1scoreSet').innerHTML = 0
-            document.querySelector('#u2scoreSet').innerHTML = 0
-            document.querySelector('#addU1').style.display = "block"
-            document.querySelector('#addU2').style.display = "block"
-            document.querySelector('#subtractU1').style.display = "block"
-            document.querySelector('#subtractU2').style.display = "block"
-            document.querySelector('#addsetU1').style.display = "block"
-            document.querySelector('#addsetU2').style.display = "block"
-            document.querySelector('#subtractsetU1').style.display = "block"
-            document.querySelector('#subtractsetU2').style.display = "block"
-            document.querySelector('#gumb').style.display = "none"
-            document.querySelector('#settingsi').style.display = "none"
-            starter = data.starter
-            document.querySelector('#turn'+starter).style.visibility = "visible"
-            turn = starter
-            notstarter = "1"
-            if (starter == "1") {
-                notstarter = "2"
-            }
-            serva = 0
-            u1points = 0
-            u2points = 0
-            waiting = true
-        }
-    });
     
     socket.on('score', data => {
         serva = data.serva
         turn = data.turn
         document.querySelector('#u1score').innerHTML = data[0]
         document.querySelector('#u2score').innerHTML = data[1]
-        if (turn == starter) {
-            document.querySelector('#turn'+notstarter).style.visibility = "hidden"
-            document.querySelector('#turn'+starter).style.visibility = "visible"
-        }
-        else {
-            document.querySelector('#turn'+starter).style.visibility = "hidden"
-            document.querySelector('#turn'+notstarter).style.visibility = "visible"
-        }
-    });
-
-    socket.on('setiMinus', data => {
-        serva = data.serva
-        document.querySelector('#u1scoreSet').innerHTML = data[0]
-        document.querySelector('#u2scoreSet').innerHTML = data[1]
-        document.querySelector('#u1score').innerHTML = 0
-        document.querySelector('#u2score').innerHTML = 0
         if (turn == starter) {
             document.querySelector('#turn'+notstarter).style.visibility = "hidden"
             document.querySelector('#turn'+starter).style.visibility = "visible"
