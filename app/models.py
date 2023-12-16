@@ -123,6 +123,17 @@ class Match(db.Model):
     # the sets played within this match
     sets = db.relationship('Set', back_populates='match', lazy=True)
 
+    def setCount(self):
+        set1 = 0
+        set2 = 0
+        for i in self.sets:
+            if i.winner != None:
+                if i.scoreL > i.scoreW:
+                    set1 += 1
+                else:
+                    set2 += 1
+        return [set1, set2]
+
 class Tag(db.Model):
     __tablename__ = 'tags'
     id = db.Column(db.Integer, primary_key=True)
@@ -145,8 +156,9 @@ class Invite(db.Model):
 
 class Set(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    scoreW = db.Column(db.Integer)
+    # actually score1 and score2, to get winner just check which one is bigger
     scoreL = db.Column(db.Integer)
+    scoreW = db.Column(db.Integer)
 
     winner = db.Column(db.Integer)
     loser = db.Column(db.Integer)

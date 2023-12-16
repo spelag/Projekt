@@ -12,6 +12,8 @@ landing page change name & sign up instead of submit & clean it up ffs
 dodej na invites da lahko prides do profila osebe
 popup za remove friend
 
+homepage ko si poslou match invite ampak se ni acceptan
+
 statistics
 zamenjaj sliko ce je copyright
 zamenjaj slikco pr match profile

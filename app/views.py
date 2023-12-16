@@ -1,6 +1,6 @@
 from app import app, db, socketio
 from flask import render_template, request, redirect, url_for, jsonify, flash, send_file, session
-from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, login_manager
+from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, Set, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from sqlalchemy import text, update, select, or_
 import random
@@ -110,39 +110,79 @@ def match(matchID, unique):
 
 @socketio.on('score')
 def score(data):
-    serva = data["serva"]
-    turn = data["turn"]
+    match = Match.query.get(data["room"])
+    set = match.sets[-1]
     if data["what"] == "plus":
-        data[data["who"]] += 1
-        serva += 1
-    else:
-        data[data["who"]] -= 1
-        if serva != 0:
-            serva -= 1
-    if data[data["who"]] == 11:
-        serva = 0
-        emit('gameOver', {"winner":data["who"], "serva":serva}, room=data["room"])
-    else:
-        if serva%4 == 0:
-            turn = data["starter"]
-        elif serva%2 == 0:
-            turn = data["notstarter"]
-        elif serva%4 == 1:
-            turn = data["starter"]
-        elif serva%4 == 3:
-            turn = data["notstarter"]
-        if data[data["who"]] >= 0:
-            emit('score', {"turn":turn, "serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
+        if data["who"] == "1":
+            set.scoreW += 1
+        else:
+            set.scoreL += 1
+        if max(set.scoreW, set.scoreL) >= 11 and max(set.scoreW, set.scoreL) - min(set.scoreW, set.scoreL) >= 2:
+            if match.setiCount == len(match.sets):
+                results = match.setCount()
+                emit('confirm', {"winner":"test", "u1score": results[0], "u2score": results[1], "setiCount": match.setiCount, "user": match.friendship.friendA}, room=data["room"])
+            else:
+                if set.scoreL > set.scoreW:
+                    set.winner = match.friendship.friendA
+                    set.loser = match.friendship.friendB
+                else:
+                    set.loser = match.friendship.friendA
+                    set.winner = match.friendship.friendB
+                newSet = Set()
+                newSet.scoreL = 0
+                newSet.scoreW = 0
+                newSet.match = match
+                db.session.add(newSet)
+                emit('updateSet', {"to": set.winner}, room=data["room"])
+            db.session.commit()
+            return
+    if data["what"] == "minus":
+        if data["who"] == "1":
+            if set.scoreW > 0:
+                set.scoreW -= 1
+        else:
+            if set.scoreL > 0:
+                set.scoreL -= 1
+    emit('score', {"score1": set.scoreL, "score2": set.scoreW}, room=data["room"])
+    db.session.commit()
+    # serva = data["serva"]
+    # turn = data["turn"]
+    # if data["what"] == "plus":
+    #     data[data["who"]] += 1
+    #     serva += 1
+    # else:
+    #     data[data["who"]] -= 1
+    #     if serva != 0:
+    #         serva -= 1
+    # if data[data["who"]] == 11:
+    #     serva = 0
+    #     emit('gameOver', {"winner":data["who"], "serva":serva}, room=data["room"])
+    # else:
+    #     if serva%4 == 0:
+    #         turn = data["starter"]
+    #     elif serva%2 == 0:
+    #         turn = data["notstarter"]
+    #     elif serva%4 == 1:
+    #         turn = data["starter"]
+    #     elif serva%4 == 3:
+    #         turn = data["notstarter"]
+    #     if data[data["who"]] >= 0:
+    #         emit('score', {"turn":turn, "serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
 
-@socketio.on('setAdjust')
-def setAdjust(data):
-    serva = 0
-    if data["what"] == "plus":
-        emit('gameOver', {"serva":serva, "winner":data["who"]}, room=data["room"])
-    else:
-        data[data["who"]] -= 1
-        if data[data["who"]] >= 0:
-            emit('setiMinus', {"serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
+confirmation = {}
+@socketio.on('finalize')
+def finalize(data):
+    if data["what"] == "ok":
+        match = Match.query.get(data["room"])
+        if data["user"] == match.friendship.friendA:
+            print('help.')
+        else:
+            confirmation[data["room"]] = 1
+    elif data["what"] == "change":
+        if data["room"] in confirmation:
+            confirmation.pop(data["room"])
+        emit('confirm', {"winner":"test", "u1score": data["u1score"], "u2score": data["u2score"], "setiCount": data["setiCount"]}, room=data["room"])
+    return
 
 readyUsers = {}
 
@@ -184,7 +224,16 @@ def join(data):
     join_room(data["room"])
     emit('join', {"readyUsers": readyUsers[data["room"]]}, room=data["room"])
     if checkIfReady(data["room"]):
-        emit('begin', room=data["room"])
+        match = Match.query.get(data["room"])
+        setCount = match.setCount()
+        if len(match.sets) == 0:
+            set = Set()
+            set.scoreL = 0
+            set.scoreW = 0
+            set.match = match
+            db.session.add(set)
+            db.session.commit()
+        emit('begin', {"score1": match.sets[-1].scoreL, "score2": match.sets[-1].scoreW, "set1": setCount[0], "set2": setCount[1]}, room=data["room"])
     print(readyUsers)
 
 # triggered when a user disconnects
@@ -435,7 +484,7 @@ def editMatch(matchID):
     if match == None:
         return redirect(url_for('index'))
     if request.method == "GET":
-        locations = Location.query.all()
+        locations = Location.query.order_by(Location.location).all()
         return render_template('editCurrentmatch.html', locations=locations, match=match)
     info = request.form
     # change location
