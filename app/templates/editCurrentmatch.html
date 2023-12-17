@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Match{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}Edit Match information{% endblock %}
+{% block content %}  
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <div class="row">
+                <form class="col-lg-12" id="settings" action="/editmatch/{{match.id}}" method="post">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm text-center">
+                                    <h5 class="mb-0">Results</h5>
+                                </div>
+                            </div>
+                            <div class="container">
+                                <div class="row">
+                                    {% for i in range(match.setiCount) %}
+                                        {% if i < match.sets|length %}
+                                            <div class="col-sm-4">
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <p class="mb-0 text-center">Set {{i+1}}</p>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u1.username}}</p>
+                                                            <input name="setA{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreL}}"/>
+                                                        </div>
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u2.username}}</p>
+                                                            <input name="setB{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreW}}"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <div class="col-sm-4">
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <p class="mb-0 text-center">Set {{i+1}}</p>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u1.username}}</p>
+                                                            <input name="setA{{i}}" type="number" class="form-control" placeholder="0"/>
+                                                        </div>
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u2.username}}</p>
+                                                            <input name="setB{{i}}" type="number" class="form-control" placeholder="0"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <h5 class="mb-0">Match Location</h5>
+                            </div>
+                            <div class="row">
+                                <p class="text-muted my-0">
+                                    <div class="form-group">
+                                        <select name="locationDropdown" class="form-control" data-live-search="true">
+                                            <option>Add New Location</option>
+                                            <option selected>{{current_user.age_group}}</option>                                                
+                                            {% for i in locations %}
+                                                <option>{{i.location}}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <p class="text-muted mb-0">
+                                            <input name="location" class="form-control" placeholder="Other"/>
+                                        </p>
+                                    </div>
+                                </p>
+                            </div>
+                            <hr class="mt-0">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <h5 class="mb-0">Tag</h5>
+                                </div>
+                                <!-- naredi isto kokr location sam za tag -->
+                            </div>
+                            <hr class="mt-0">
+                            <div class="row">
+                                <div class="col-sm-1">
+                                    <h5 class="mb-0">Sets</h5>
+                                </div>
+                                <div class="col-sm-11">
+                                    <select name="sets" class="form-control">
+                                        <option selected>{{match.setiCount}}</option>
+                                        {% if match.setiCount == 3 %}
+                                        <option>5</option>
+                                        {% elif match.setiCount == 5 %}
+                                        <option>3</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <h5 class="mb-0">Notes (any note you wish to leave for your opponent)</h5>
+                                    <p class="text-muted mb-0">
+                                        <div class="form-group">
+                                            <p class="text-muted mb-0">
+                                                <textarea name="note" rows="4" class="form-control">{{match.notes}}</textarea>
+                                            </p>
+                                        </div>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-3 mb-3">
+                            <button type="submit" form="settings" class="btn btn-danger">Save</button>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning" role="alert" data-mdb-color="warning">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        Your opponent will also be able to see any changes you make.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

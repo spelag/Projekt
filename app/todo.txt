@@ -1,0 +1,43 @@
+pastmatches.html une slikice za sort sprement (narjen sam uredit je treba)
+import/export the results
+frontpage not logged in
+- bottom about us etc
+- un text umes
+- credit properly
+logged in frontpage
+- boljsi opis friends(also add friends)
+
+landing page change name & sign up instead of submit & clean it up ffs
+add sign up to log in
+
+na current match ni stevila setov
+
+dodej na invites da lahko prides do profila osebe
+popup za remove friend
+
+homepage ko si poslou match invite ampak se ni acceptan
+
+statistics
+zamenjaj sliko ce je copyright
+zamenjaj slikco pr match profile
+zamenjaj slikco pr profiles???
+
+make it so that you can add tags
+make locations smoother
+make chat available even after accepting match
+
+make matches na homepagu prettier pa explaini kako deluje
+
+figure out kako bojo matches sploh delval s seti
+
+socketio flowcharts
+
+<a class="btn btn-primary" href="{{url_for('match', matchID=matchID, unique=unique)}}">Proceed to the Match</a>
+const matchID = `{{matchID}}`;
+
+ffs chat query
+href="{{url_for('chat', matchID=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().id, unique=Match.query.filter_by(invitee=current_user.id, inviter=User.query.filter_by(id=current_user.invites[i].inviter).first().id).first().unique)}}"
+
+
+
+href="{{url_for('declineInvite', invite=current_user.outboundInvites[i].invite)}}"
