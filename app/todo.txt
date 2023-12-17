@@ -8,6 +8,9 @@ logged in frontpage
 - boljsi opis friends(also add friends)
 
 landing page change name & sign up instead of submit & clean it up ffs
+add sign up to log in
+
+na current match ni stevila setov
 
 dodej na invites da lahko prides do profila osebe
 popup za remove friend

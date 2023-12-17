@@ -28,8 +28,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for j in matches %}
-                                {% for i in j %}
+                                {% for i in matches %}
                                 <tr>
                                 {% if i.friendship.friendA == current_user.id %}
                                 <th scope="row">{{User.query.get(i.friendship.friendB).username}}</th>
@@ -59,7 +58,6 @@
                                     </a>
                                 </th>
                             </tr>
-                            {% endfor %}
                         {% endfor %}
                     </tbody>
                 </table>

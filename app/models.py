@@ -94,14 +94,12 @@ class Match(db.Model):
     timeSuggestion = db.Column(db.String(60))
     timeConfirmA = db.Column(db.Boolean)
     timeConfirmB = db.Column(db.Boolean)
-    # winnerPoints = db.Column(db.String(10))
-    # loserPoints = db.Column(db.String(10))
-    # sets = db.Column(db.Integer)
-    # setResults = db.Column(db.String(30))
     setiCount = db.Column(db.Integer)
     matchDate = db.Column(db.DateTime(timezone=True))
-    started = db.Column(db.Boolean)
-    
+    finished = db.Column(db.Boolean)
+    confirmA = db.Column(db.Boolean)
+    confirmB = db.Column(db.Boolean)
+
     # foreign keys ig
     friendship_id = db.Column(db.Integer, db.ForeignKey('friendships.id'))
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'))

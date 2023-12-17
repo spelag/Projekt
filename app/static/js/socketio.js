@@ -17,8 +17,6 @@
 
     // handles the "waiting" text
     socket.on('unjoin', data => {
-        console.log(`istg`)
-        console.log(data["readyUsers"].includes(u1))
         if (data["readyUsers"].includes(u1) == false) {
             document.querySelector("#u1").innerHTML = `<h1>Waiting for ` + u1name + `...</h1>`
         }
@@ -75,6 +73,9 @@
         u2points = 0
     })
 
+    socket.on('redirect', data => {
+        window.location = data.url
+    })
     
     socket.on('score', data => {
         // serva = data.serva

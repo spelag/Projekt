@@ -18,9 +18,13 @@ def index():
     session['url'] = url_for('index')
     if current_user.is_authenticated:
         matches = []
-        friendships = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id))
-        for i in friendships:
-            matches.append(i.matches)
+        # friendships = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id))
+        # for i in friendships:
+        #     matches.append(i.matches)
+        temp = Match.query.filter(Match.finished==False).all()
+        for i in temp:
+            if i.friendship.friendA==current_user.id or i.friendship.friendB==current_user.id:
+                matches.append(i)
         return render_template('loggedinHomepage.html', User=User, matches=matches, length=len(matches))
     return render_template('homepage.html')
 
@@ -101,12 +105,13 @@ matches = []
 def match(matchID, unique):
     match = Match.query.get(matchID)
 
-    if match.friendship.friendB != current_user.id and match.friendship.friendA != current_user.id:
-        return redirect(url_for('index'))
+    if len(match.sets) >= match.setiCount:
+        flash("You've already played this match.")
+        return redirect(url_for('oneMatch', id=match.id))
 
     u1 = User.query.get(match.friendship.friendA)
     u2 = User.query.get(match.friendship.friendB)
-    return render_template('matches/match.html', u1=u1, u2=u2, unique=unique, u1Score=0, u2Score=0, matchID=matchID)
+    return render_template('match.html', u1=u1, u2=u2, unique=unique, u1Score=0, u2Score=0, matchID=matchID)
 
 @socketio.on('score')
 def score(data):
@@ -118,16 +123,17 @@ def score(data):
         else:
             set.scoreL += 1
         if max(set.scoreW, set.scoreL) >= 11 and max(set.scoreW, set.scoreL) - min(set.scoreW, set.scoreL) >= 2:
-            if match.setiCount == len(match.sets):
-                results = match.setCount()
-                emit('confirm', {"winner":"test", "u1score": results[0], "u2score": results[1], "setiCount": match.setiCount, "user": match.friendship.friendA}, room=data["room"])
+            if set.scoreL > set.scoreW:
+                set.winner = match.friendship.friendA
+                set.loser = match.friendship.friendB
             else:
-                if set.scoreL > set.scoreW:
-                    set.winner = match.friendship.friendA
-                    set.loser = match.friendship.friendB
-                else:
-                    set.loser = match.friendship.friendA
-                    set.winner = match.friendship.friendB
+                set.loser = match.friendship.friendA
+                set.winner = match.friendship.friendB
+            if match.setiCount == len(match.sets):
+                match.confirmA = False
+                match.confirmB = False
+                emit('redirect', {"url": url_for('oneMatch', id=data["room"])}, room=data["room"])
+            else:
                 newSet = Set()
                 newSet.scoreL = 0
                 newSet.scoreW = 0
@@ -145,29 +151,6 @@ def score(data):
                 set.scoreL -= 1
     emit('score', {"score1": set.scoreL, "score2": set.scoreW}, room=data["room"])
     db.session.commit()
-    # serva = data["serva"]
-    # turn = data["turn"]
-    # if data["what"] == "plus":
-    #     data[data["who"]] += 1
-    #     serva += 1
-    # else:
-    #     data[data["who"]] -= 1
-    #     if serva != 0:
-    #         serva -= 1
-    # if data[data["who"]] == 11:
-    #     serva = 0
-    #     emit('gameOver', {"winner":data["who"], "serva":serva}, room=data["room"])
-    # else:
-    #     if serva%4 == 0:
-    #         turn = data["starter"]
-    #     elif serva%2 == 0:
-    #         turn = data["notstarter"]
-    #     elif serva%4 == 1:
-    #         turn = data["starter"]
-    #     elif serva%4 == 3:
-    #         turn = data["notstarter"]
-    #     if data[data["who"]] >= 0:
-    #         emit('score', {"turn":turn, "serva":serva, "0":data["0"], "1":data["1"]}, room=data['room'])
 
 confirmation = {}
 @socketio.on('finalize')
@@ -185,17 +168,6 @@ def finalize(data):
     return
 
 readyUsers = {}
-
-@socketio.on('start')
-def start(data):
-    if len(readyUsers[data["matchID"]]) == 1:
-        Match.query.filter_by(id=data['matchID']).first().matchDate = datetime.now()
-        db.session.commit()
-        readyUsers[data["matchID"]].append(data['user'])
-        emit('start', {"user":data['user'], "ready": True, "starter":str(random.choice([1,2]))}, room=data['matchID'])
-    else:
-        readyUsers[data["matchID"]].append(data['user'])
-        emit('start', {"user":data['user'], "ready": False}, room=data['matchID'])
 
 @socketio.on('setiChange')
 def setiChange(data):
@@ -217,6 +189,7 @@ def checkIfReady(matchID):
 # emits join to change the waiting for text
 @socketio.on('join')
 def join(data):
+    match = Match.query.get(data["room"])
     session['room'] = data["room"]
     if data["room"] not in readyUsers:
         readyUsers[data["room"]] = []
@@ -224,9 +197,8 @@ def join(data):
     join_room(data["room"])
     emit('join', {"readyUsers": readyUsers[data["room"]]}, room=data["room"])
     if checkIfReady(data["room"]):
-        match = Match.query.get(data["room"])
         setCount = match.setCount()
-        if len(match.sets) == 0:
+        if len(match.sets) == 0 or match.sets[-1].winner != None:
             set = Set()
             set.scoreL = 0
             set.scoreW = 0
@@ -254,25 +226,6 @@ def disconnect():
 def changeResult(data):
     emit('changeResult', room=data["matchID"])
     # return redirect(url_for('chat', matchID=match.id, unique=unique))
-
-@socketio.on('save')
-def save(data):
-    match = Match.query.filter_by(id=data["matchID"]).first()
-    if data["waiting"]:
-        emit("stopWait", room=data["room"])
-        return
-    match.loser = data["loser"]
-    match.winner = data["winner"]
-    match.winnerPoints = data["winP"]
-    match.loserPoints = data["losP"]
-    match.sets = data["seti"]
-    match.setResults = data["setRez"]
-    match.started = False
-    match.inviter = None
-    print(match.invite)
-    db.session.delete(Invite.query.filter_by(id=match.invite).first())
-    db.session.commit()
-    emit("leave", room=data["room"])
 
 @app.route('/newmatch/<opponent>')
 @login_required
@@ -325,7 +278,7 @@ def acceptMatch(inviter):
     matches.append(unique)
     match = Match()
     match.unique = unique
-    match.started = True
+    match.finished = False
     match.setiCount = 3
     db.session.add(match)
     friendship.matches.append(match)
@@ -338,7 +291,7 @@ def acceptMatch(inviter):
 def pastmatches():
     session['url'] = url_for('pastmatches')
 
-    d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate.desc()))
+    d = (Match.query.filter(or_(Match.winner==current_user.id, Match.loser==current_user.id)).order_by(Match.matchDate.desc())).all()
 
     return render_template('pastmatches.html', user=current_user, User=User, matches=d)
 
@@ -346,17 +299,18 @@ def pastmatches():
 @login_required
 def pastmatchesSort(what, type):
     session['url'] = url_for('pastmatchesSort', what=what, type=type)
+    d = Match.query.filter(or_(Match.winner==current_user.id, Match.loser==current_user.id))
     if what == "date":
         if type == "desc":
-            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate.desc()))
+            d = d.order_by(Match.matchDate.desc())
         elif type == "incr":
-            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.matchDate))
-    elif what == "winner":
-        if type == "desc":
-            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.winner.desc()))
-        elif type == "incr":
-            d = (Match.query.filter(or_(Match.winner==current_user.username, Match.loser==current_user.username)).order_by(Match.winner))
-
+            d = d.order_by(Match.matchDate)
+    # elif what == "winner":
+        # if type == "desc":
+        #     d = d.order_by((User.query.get(Match.winner))).all()
+        # elif type == "incr":
+        #     d = d.order_by(Match.winner).all()
+    d = d.all()
     return render_template('pastmatches.html', user=current_user, User=User, matches=d)
 
 @app.route('/pastmatches/export')
@@ -379,9 +333,15 @@ def oneMatch(id):
     match = Match.query.filter(Match.id == id).first()
     if match == None:
         return redirect(url_for('index'))
-    if match.started:
-        return render_template('currentmatch.html', match=match, User=User, u1=User.query.get(match.friendship.friendA), u2=User.query.get(match.friendship.friendB))
-    return render_template('onematch.html', user=current_user, match=match, User=User)
+    if match.finished:
+        return render_template('onematch.html', user=current_user, match=match, User=User, winner=User.query.get(match.winner), loser=User.query.get(match.loser))
+    u1=User.query.get(match.friendship.friendA)
+    u2=User.query.get(match.friendship.friendB)
+    if current_user == u1 and match.confirmA:
+        return render_template('currentmatch.html', match=match, User=User, u1=u1, u2=u2, confirmable=False)
+    if current_user == u2 and match.confirmB:
+        return render_template('currentmatch.html', match=match, User=User, u1=u1, u2=u2, confirmable=False)
+    return render_template('currentmatch.html', match=match, User=User, u1=u1, u2=u2, confirmable=True)
 
 chats = {}
 
@@ -483,9 +443,13 @@ def editMatch(matchID):
     match = Match.query.get(matchID)
     if match == None:
         return redirect(url_for('index'))
+    if match.finished:
+        return redirect(url_for('oneMatch'), id=match.id)
     if request.method == "GET":
         locations = Location.query.order_by(Location.location).all()
-        return render_template('editCurrentmatch.html', locations=locations, match=match)
+        return render_template('editCurrentmatch.html', locations=locations, match=match, u1=User.query.get(match.friendship.friendA), u2=User.query.get(match.friendship.friendB))
+    match.confirmA = False
+    match.confirmB = False
     info = request.form
     # change location
     if info['locationDropdown'] == "Add New Location":
@@ -500,6 +464,73 @@ def editMatch(matchID):
     match.tag
     match.notes = info['note']
     match.timeSuggestion
+    db.session.commit()
+    # change set results
+    for i in range(match.setiCount):
+        a = "setA" + str(i)
+        b = "setB" + str(i)
+        a = request.form[a]
+        b = request.form[b]
+        if a != "" or b != "":
+            if a == "":
+                a = match.sets[i].scoreL
+            if b == "":
+                b = match.sets[i].scoreW
+            a = int(a)
+            b = int(b)
+            maxi = max(a, b)
+            mini = min(a, b)
+            if mini < 0:
+                flash("You entered an imposible score.")
+                return redirect(url_for('oneMatch', id=match.id))
+            if (maxi == 11 and mini < 10) or (maxi > 11 and maxi-mini == 2):
+                if len(match.sets) > i:
+                    match.sets[i].scoreL = a
+                    match.sets[i].scoreW = b
+                    if a > b:
+                        match.sets[i].winner = match.friendship.friendA
+                        match.sets[i].loser = match.friendship.friendB
+                    else:
+                        match.sets[i].winner = match.friendship.friendB
+                        match.sets[i].loser = match.friendship.friendA
+                else:
+                    set = Set()
+                    set.scoreL = a
+                    set.scoreW = b
+                    set.match = match
+                    if a > b:
+                        set.winner = match.friendship.friendA
+                        set.loser = match.friendship.friendB
+                    else:
+                        set.winner = match.friendship.friendB
+                        set.loser = match.friendship.friendA
+                    db.session.add(set)
+            else:
+                flash("You entered an imposible score.")
+                return redirect(url_for('oneMatch', id=match.id))
+    db.session.commit()
+    return redirect(url_for('oneMatch', id=match.id))
+
+@app.route('/match/<matchID>/confirmresults')
+@login_required
+def matchConfirm(matchID):
+    match = Match.query.get(matchID)
+    if len(match.sets) < match.setiCount or match.sets[match.setiCount-1].winner ==  None:
+        flash("Match must have a score.")
+        return redirect(url_for('oneMatch', id=match.id))
+    if current_user.id == match.friendship.friendA:
+        match.confirmA = True
+    elif current_user.id == match.friendship.friendB:
+        match.confirmB = True
+    if match.confirmA and match.confirmB:
+        match.finished = True
+        count = match.setCount()
+        if count[0] > count[1]:
+            match.winner = match.friendship.friendA
+            match.loser = match.friendship.friendB
+        else:
+            match.winner = match.friendship.friendB
+            match.loser = match.friendship.friendA
     db.session.commit()
     return redirect(url_for('oneMatch', id=match.id))
 
@@ -535,7 +566,7 @@ def allusers(who):
         userCount = allUsers.count()
         btnA = "primary"
     print(requested, allUsers)
-    return render_template('users/allusers.html', Invite=Invite, userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR, friends=friends, requested=requested, requester=requester, inInvites=inInvites, outInvites=outInvites)
+    return render_template('allusers.html', Invite=Invite, userCount=userCount, allUsers=allUsers, loggedin=current_user.is_active, btnA=btnA, btnF=btnF, btnR=btnR, friends=friends, requested=requested, requester=requester, inInvites=inInvites, outInvites=outInvites)
 
 @app.route('/friendrequest/<friendName>/<friendID>')
 @login_required

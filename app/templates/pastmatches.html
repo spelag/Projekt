@@ -7,7 +7,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        {% if not matches %}
+        {% if matches|length == 0 %}
         <div class="text-center">
             <h3>You haven't played any matches yet.</h3>
             <a class="btn btn-warning" href="/members/friends">Invite a friend to a match</a>
@@ -50,10 +50,15 @@
             <tbody>
                 {% for i in matches %}
                     <tr>
-                        <th scope="row">{{User.query.filter((User.username==i.loser), User.id != user.id).first().username}}{{User.query.filter((User.username==i.winner), User.id != user.id).first().username}}</th>
+                        {% if user.id == i.winner %}
+                            <th scope="row">{{User.query.get(i.loser).username}}</th>
+                        {% else %}
+                            <th scope="row">{{User.query.get(i.winner).username}}</th>
+                        {% endif %}
                         <td>{{i.matchDate.day}}. {{i.matchDate.month}}. {{i.matchDate.year}}</td>
-                        <td>{{i.winner}}</td>
-                        <td>{{i.setResults[0]}}:{{i.setResults[1]}}</td>
+                        <td>{{User.query.get(i.winner).username}}</td>
+                        {% set count = i.setCount() %}
+                        <td>{{count[0]}}:{{count[1]}}</td>
                         <td>
                             <a href="{{url_for('oneMatch', id=i.id)}}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">

@@ -16,9 +16,13 @@
                                     class="rounded-circle img-fluid" style="width: 150px;">
                                 <h5 class="my-3">{{u1.username}} vs {{u2.username}}</h5>
                                 <div class="d-flex justify-content-center mb-2">
-                                    <a type="button" class="btn btn-outline-primary" href="/editmatch/{{match.id}}">Edit</a>
-                                    <a type="button" class="btn btn-outline-secondary" href="/match/{{match.id}}/{{match.unique}}">Start</a>
-                                        <!-- kksn knof -->
+                                    {% if confirmable %}
+                                        <a type="button" class="btn btn-outline-primary" href="/editmatch/{{match.id}}">Edit</a>
+                                        <a type="button" class="btn btn-outline-secondary" href="/match/{{match.id}}/{{match.unique}}">Play</a>
+                                        <a type="button" class="btn btn-outline-secondary" href="{{url_for('matchConfirm', matchID=match.id)}}">Confirm Match Data</a>
+                                    {% else %}
+                                        <p>Your opponent hasn't confirmed the results yet.</p>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -26,6 +30,50 @@
                     <div class="col-lg-8">
                         <div class="card mb-4">
                             <div class="card-body">
+                                <div class="container">
+                                    <div class="row">
+                                        {% for i in range(match.setiCount) %}
+                                            {% if i < match.sets|length %}
+                                                <div class="col-sm-4">
+                                                    <div class="container">
+                                                        <div class="row">
+                                                            <p class="mb-0 text-center">Set {{i+1}}</p>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-sm">
+                                                                <p class="mb-0 text-center">{{u1.username}}</p>
+                                                                <p class="text-center">{{match.sets[i].scoreL}}</p>
+                                                            </div>
+                                                            <div class="col-sm">
+                                                                <p class="mb-0 text-center">{{u2.username}}</p>
+                                                                <p class="text-center">{{match.sets[i].scoreW}}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="col-sm-4">
+                                                    <div class="container">
+                                                        <div class="row">
+                                                            <p class="mb-0 text-center">Set {{i+1}}</p>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-sm">
+                                                                <p class="mb-0 text-center">{{u1.username}}</p>
+                                                                <p class="text-center">0</p>
+                                                            </div>
+                                                            <div class="col-sm">
+                                                                <p class="mb-0 text-center">{{u2.username}}</p>
+                                                                <p class="text-center">0</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <hr>
                                 <div class="row">
                                     <div class="col-sm-3">
                                         <p class="mb-0">Match Location</p>
@@ -37,7 +85,7 @@
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        <p class="mb-0">Match Date Suggestion</p>
+                                        <p class="mb-0">Match Date</p>
                                     </div>
                                     <div class="col-sm-9">
                                         <p class="text-muted mb-0">

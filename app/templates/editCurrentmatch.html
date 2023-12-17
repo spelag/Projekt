@@ -12,7 +12,56 @@
                     <div class="card mb-4">
                         <div class="card-body">
                             <div class="row">
-                                <p class="mb-0">Match Location</p>
+                                <div class="col-sm text-center">
+                                    <h5 class="mb-0">Results</h5>
+                                </div>
+                            </div>
+                            <div class="container">
+                                <div class="row">
+                                    {% for i in range(match.setiCount) %}
+                                        {% if i < match.sets|length %}
+                                            <div class="col-sm-4">
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <p class="mb-0 text-center">Set {{i+1}}</p>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u1.username}}</p>
+                                                            <input name="setA{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreL}}"/>
+                                                        </div>
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u2.username}}</p>
+                                                            <input name="setB{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreW}}"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <div class="col-sm-4">
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <p class="mb-0 text-center">Set {{i+1}}</p>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u1.username}}</p>
+                                                            <input name="setA{{i}}" type="number" class="form-control" placeholder="0"/>
+                                                        </div>
+                                                        <div class="col-sm">
+                                                            <p class="mb-0 text-center">{{u2.username}}</p>
+                                                            <input name="setB{{i}}" type="number" class="form-control" placeholder="0"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <h5 class="mb-0">Match Location</h5>
                             </div>
                             <div class="row">
                                 <p class="text-muted my-0">
@@ -33,14 +82,14 @@
                             <hr class="mt-0">
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <p class="mb-0">Tag</p>
+                                    <h5 class="mb-0">Tag</h5>
                                 </div>
                                 <!-- naredi isto kokr location sam za tag -->
                             </div>
                             <hr class="mt-0">
                             <div class="row">
                                 <div class="col-sm-1">
-                                    <p class="mb-0">Sets</p>
+                                    <h5 class="mb-0">Sets</h5>
                                 </div>
                                 <div class="col-sm-11">
                                     <select name="sets" class="form-control">
@@ -56,7 +105,7 @@
                             <hr>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <p class="mb-0">Notes (any note you wish to leave for your opponent)</p>
+                                    <h5 class="mb-0">Notes (any note you wish to leave for your opponent)</h5>
                                     <p class="text-muted mb-0">
                                         <div class="form-group">
                                             <p class="text-muted mb-0">
