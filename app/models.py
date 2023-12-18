@@ -35,6 +35,7 @@ class User(db.Model, UserMixin):
     # outboundRequests = db.relationship('FriendRequest', back_populates='requester', lazy=True)
     # inboundInvites = db.relationship('Match', back_populates='invitee', lazy=True)
     # outboundInvites = db.relationship('Match', back_populates='inviter', lazy=True)
+    notifications = db.Relationship('Notification', back_populates='user', order_by='Notification.id.desc()')
 
     def get_friends(self):
         friends = []
@@ -126,7 +127,7 @@ class Match(db.Model):
         set2 = 0
         for i in self.sets:
             if i.winner != None:
-                if i.scoreL > i.scoreW:
+                if i.scoreA > i.scoreB:
                     set1 += 1
                 else:
                     set2 += 1
@@ -155,11 +156,20 @@ class Invite(db.Model):
 class Set(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # actually score1 and score2, to get winner just check which one is bigger
-    scoreL = db.Column(db.Integer)
-    scoreW = db.Column(db.Integer)
+    scoreA = db.Column(db.Integer)
+    scoreB = db.Column(db.Integer)
 
     winner = db.Column(db.Integer)
     loser = db.Column(db.Integer)
 
     match = db.relationship('Match', back_populates='sets', lazy=True)
     match_id = db.Column(db.Integer, db.ForeignKey('matches.id'))
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text())
+    read = db.Column(db.Boolean)
+    type = db.Column(db.String(3))
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.relationship('User', back_populates='notifications')

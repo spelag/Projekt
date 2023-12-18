@@ -7,10 +7,13 @@ frontpage not logged in
 logged in frontpage
 - boljsi opis friends(also add friends)
 
+import/export
+
 landing page change name & sign up instead of submit & clean it up ffs
 add sign up to log in
 
 na current match ni stevila setov
+past matches dodej lokacijo, st setov, tag,...
 
 dodej na invites da lahko prides do profila osebe
 popup za remove friend
