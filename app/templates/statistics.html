@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Statistics{% endblock %}
+{% block head %}
+    {{ super() }}
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+
+{% endblock %}
+{% block pagetitle %}Personal Statistics{% endblock %}
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <canvas id="test" style="width:100%;max-width:1000px"></canvas>
+            <canvas id="test2" style="width:100%;max-width:1000px"></canvas>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var xyValues = [
+        {x:50, y:7},
+        {x:60, y:8},
+        {x:70, y:8},
+        {x:80, y:9},
+        {x:90, y:9},
+        {x:100, y:9},
+        {x:110, y:10},
+        {x:120, y:11},
+        {x:130, y:14},
+        {x:140, y:14},
+        {x:150, y:15}
+    ];
+
+    const data = {
+        labels: {{ lables | tojson }},
+        datasets: [{
+            label: 'Previous Scores',
+            data: {{ scores | tojson }},
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    };
+
+    const options = {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    min: 0,
+                    stepSize: 1
+                }
+            }]
+        }
+    }
+
+    const config = {
+        type: 'line',
+        data: data,
+        options: options
+      };
+
+    new Chart('test', config);
+
+    const data2 = {
+        labels: [
+        'Wins',
+        'Losses'
+        ],
+        datasets: [{
+            label: 'Wins and losses',
+            data: [{{ wins | tojson }}, {{ losses | tojson }}],
+            backgroundColor: [
+            'rgb(255, 99, 132)',
+            'rgb(54, 162, 235)'
+            ],
+            hoverOffset: 4
+        }]
+    };
+    const config2 = {
+        type: 'doughnut',
+        data: data2,
+    };
+
+    new Chart('test2', config2)
+</script>
+{% endblock %}

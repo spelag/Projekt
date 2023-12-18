@@ -1,6 +1,6 @@
 from app import app, db, socketio
 from flask import render_template, request, redirect, url_for, jsonify, flash, send_file, session
-from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, Set, login_manager
+from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, Set, Notification, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from sqlalchemy import text, update, select, or_
 import random
@@ -12,6 +12,15 @@ import csv
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+def createNotification(user, content, type):
+    notif = Notification()
+    notif.user = user
+    notif.content = content
+    notif.type = type
+    db.session.add(notif)
+    db.session.commit()
+    return
 
 @app.route('/')
 def index():
@@ -87,7 +96,15 @@ def logout():
 @login_required
 def notifications():
     session['url'] = url_for('notifications')
-    return render_template('notifications.html')
+    return render_template('notifications.html', notifications=current_user.notifications)
+
+@app.route('/notifications/<id>/read')
+@login_required
+def readNotification(id):
+    notif = Notification.query.get(id)
+    notif.read = True
+    db.session.commit()
+    return redirect(url_for('notifications'))
 
 def generate_unique_code(length):
     while True:
@@ -119,11 +136,11 @@ def score(data):
     set = match.sets[-1]
     if data["what"] == "plus":
         if data["who"] == "1":
-            set.scoreW += 1
+            set.scoreB += 1
         else:
-            set.scoreL += 1
-        if max(set.scoreW, set.scoreL) >= 11 and max(set.scoreW, set.scoreL) - min(set.scoreW, set.scoreL) >= 2:
-            if set.scoreL > set.scoreW:
+            set.scoreA += 1
+        if max(set.scoreB, set.scoreA) >= 11 and max(set.scoreB, set.scoreA) - min(set.scoreB, set.scoreA) >= 2:
+            if set.scoreA > set.scoreB:
                 set.winner = match.friendship.friendA
                 set.loser = match.friendship.friendB
             else:
@@ -135,8 +152,8 @@ def score(data):
                 emit('redirect', {"url": url_for('oneMatch', id=data["room"])}, room=data["room"])
             else:
                 newSet = Set()
-                newSet.scoreL = 0
-                newSet.scoreW = 0
+                newSet.scoreA = 0
+                newSet.scoreB = 0
                 newSet.match = match
                 db.session.add(newSet)
                 emit('updateSet', {"to": set.winner}, room=data["room"])
@@ -144,28 +161,13 @@ def score(data):
             return
     if data["what"] == "minus":
         if data["who"] == "1":
-            if set.scoreW > 0:
-                set.scoreW -= 1
+            if set.scoreB > 0:
+                set.scoreB -= 1
         else:
-            if set.scoreL > 0:
-                set.scoreL -= 1
-    emit('score', {"score1": set.scoreL, "score2": set.scoreW}, room=data["room"])
+            if set.scoreA > 0:
+                set.scoreA -= 1
+    emit('score', {"score1": set.scoreA, "score2": set.scoreB}, room=data["room"])
     db.session.commit()
-
-confirmation = {}
-@socketio.on('finalize')
-def finalize(data):
-    if data["what"] == "ok":
-        match = Match.query.get(data["room"])
-        if data["user"] == match.friendship.friendA:
-            print('help.')
-        else:
-            confirmation[data["room"]] = 1
-    elif data["what"] == "change":
-        if data["room"] in confirmation:
-            confirmation.pop(data["room"])
-        emit('confirm', {"winner":"test", "u1score": data["u1score"], "u2score": data["u2score"], "setiCount": data["setiCount"]}, room=data["room"])
-    return
 
 readyUsers = {}
 
@@ -200,12 +202,12 @@ def join(data):
         setCount = match.setCount()
         if len(match.sets) == 0 or match.sets[-1].winner != None:
             set = Set()
-            set.scoreL = 0
-            set.scoreW = 0
+            set.scoreA = 0
+            set.scoreB = 0
             set.match = match
             db.session.add(set)
             db.session.commit()
-        emit('begin', {"score1": match.sets[-1].scoreL, "score2": match.sets[-1].scoreW, "set1": setCount[0], "set2": setCount[1]}, room=data["room"])
+        emit('begin', {"score1": match.sets[-1].scoreA, "score2": match.sets[-1].scoreB, "set1": setCount[0], "set2": setCount[1]}, room=data["room"])
     print(readyUsers)
 
 # triggered when a user disconnects
@@ -250,19 +252,11 @@ def newMatch(opponent):
     db.session.add(invite)
     db.session.commit()
 
+    createNotification(opponent, current_user.username + " has invited you to a match.", "inv")
+
     if 'url' in session:
         return redirect(session['url'])
     return redirect(url_for('invites'))
-
-    # m2 = Match.query.filter_by(invitee=current_user.id, inviter=opponent.id).first()
-    # if (not Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first() and not m2) or (m2.started == False or Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first().started == False):
-    #     return render_template('matchSettings.html', opponent=opponent, unique=unique, matchID=match.id)
-    # elif m2:
-    #     match = m2
-    #     unique = match.unique        
-    # else:
-    #     match = Match.query.filter_by(inviter=current_user.id, invitee=opponent.id).first()
-    #     unique = match.unique
 
 @app.route('/acceptmatch/<inviter>')
 @login_required
@@ -283,6 +277,7 @@ def acceptMatch(inviter):
     db.session.add(match)
     friendship.matches.append(match)
     db.session.delete(invite)
+    createNotification(opponent, current_user.username + " has accepted your match invite.", "inv")
     db.session.commit()
     return redirect(url_for('oneMatch', id=match.id))
 
@@ -384,6 +379,7 @@ def invites():
 @login_required
 def declineInvite(invite):
     invite = Invite.query.get(invite)
+    createNotification(User.query.get(invite.inviter), User.query.get(invite.invitee).username + " has declined your invite to a match.", "inv")
     db.session.delete(invite)
     db.session.commit()
     if 'url' in session:
@@ -465,6 +461,10 @@ def editMatch(matchID):
     match.notes = info['note']
     match.timeSuggestion
     db.session.commit()
+    if current_user == match.friendship.friendA:
+        createNotification(User.query.get(match.friendship.friendB), current_user.username + " has edited your current match data.", "mat")
+    if current_user == match.friendship.friendB:
+        createNotification(User.query.get(match.friendship.friendA), current_user.username + " has edited your current match data.", "mat")
     # change set results
     for i in range(match.setiCount):
         a = "setA" + str(i)
@@ -473,9 +473,9 @@ def editMatch(matchID):
         b = request.form[b]
         if a != "" or b != "":
             if a == "":
-                a = match.sets[i].scoreL
+                a = match.sets[i].scoreA
             if b == "":
-                b = match.sets[i].scoreW
+                b = match.sets[i].scoreB
             a = int(a)
             b = int(b)
             maxi = max(a, b)
@@ -485,8 +485,8 @@ def editMatch(matchID):
                 return redirect(url_for('oneMatch', id=match.id))
             if (maxi == 11 and mini < 10) or (maxi > 11 and maxi-mini == 2):
                 if len(match.sets) > i:
-                    match.sets[i].scoreL = a
-                    match.sets[i].scoreW = b
+                    match.sets[i].scoreA = a
+                    match.sets[i].scoreB = b
                     if a > b:
                         match.sets[i].winner = match.friendship.friendA
                         match.sets[i].loser = match.friendship.friendB
@@ -495,8 +495,8 @@ def editMatch(matchID):
                         match.sets[i].loser = match.friendship.friendA
                 else:
                     set = Set()
-                    set.scoreL = a
-                    set.scoreW = b
+                    set.scoreA = a
+                    set.scoreB = b
                     set.match = match
                     if a > b:
                         set.winner = match.friendship.friendA
@@ -520,8 +520,10 @@ def matchConfirm(matchID):
         return redirect(url_for('oneMatch', id=match.id))
     if current_user.id == match.friendship.friendA:
         match.confirmA = True
+        createNotification(User.query.get(match.friendship.friendB), current_user.username + " has confirmed your match results.", "mat")
     elif current_user.id == match.friendship.friendB:
         match.confirmB = True
+        createNotification(User.query.get(match.friendship.friendA), current_user.username + " has confirmed your match results.", "mat")
     if match.confirmA and match.confirmB:
         match.finished = True
         count = match.setCount()
@@ -533,6 +535,24 @@ def matchConfirm(matchID):
             match.loser = match.friendship.friendA
     db.session.commit()
     return redirect(url_for('oneMatch', id=match.id))
+
+@app.route('/statistics')
+@login_required
+def statistics():
+    scores = []
+    labels = []
+    sets = Set.query.filter(or_(Set.winner==current_user.id, Set.loser==current_user.id)).all()
+    for i in sets:
+        if i.winner == current_user.id:
+            scores.append(max(i.scoreA, i.scoreB))
+            labels.append(User.query.get(i.loser).username)
+        else:
+            scores.append(min(i.scoreA, i.scoreB))
+            labels.append(User.query.get(i.winner).username)
+    wins = Match.query.filter(Match.winner==current_user.id).all()
+    losses = Match.query.filter(Match.loser==current_user.id).all()
+
+    return render_template('statistics.html', scores=scores, lables=labels, wins=len(wins), losses=len(losses))
 
 @app.route('/members/<who>')
 @login_required
@@ -553,7 +573,6 @@ def allusers(who):
     outInvites = current_user.get_outboundInvites()
 
     if who == "friends":
-        print(current_user.get_friends())
         allUsers = friends
         userCount = len(allUsers)
         btnF = "primary"
@@ -582,6 +601,7 @@ def friendRequest(friendName, friendID):
         requested = friendID)
     db.session.add(friendRequest)
     db.session.commit()
+    createNotification(User.query.get(friendID), current_user.username + " has sent you a friend request.", "fri")
     flash("Friend request sent successfully.")
     if 'url' in session:
         return redirect(session['url'])
@@ -593,6 +613,7 @@ def removeRequest(friendID):
         db.session.delete(FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first())
     else:
         db.session.delete(FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first())
+        createNotification(User.query.get(friendID), current_user.username + " has rejected your friend request.", "fri")
     db.session.commit()
     return redirect(url_for('allusers', who="friendrequests"))
 
@@ -616,6 +637,7 @@ def addFriend(friendName, friendID):
         friendA = friendID)
     db.session.add(friend)
     db.session.commit()
+    createNotification(User.query.get(friendID), current_user.username + " has accepted your friend request.", "fri")
     return redirect(url_for('profile', username=friendName, userID=friendID))
 
 @app.route('/removefriend/<friendName>/<friendID>')
@@ -626,6 +648,7 @@ def removeFriend(friendName, friendID):
         a = Friendship.query.filter_by(friendB=current_user.id, friendA=friendID).first()
     db.session.delete(a)
     db.session.commit()
+    createNotification(User.query.get(friendID), current_user.username + " has terminated your friendship.", "fri")
     if 'url' in session:
         return redirect(session['url'])
     return redirect(url_for('profile', username=friendName, userID=friendID))
