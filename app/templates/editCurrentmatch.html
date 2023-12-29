@@ -60,38 +60,40 @@
                                 </div>
                             </div>
                             <hr>
-                            <div class="row">
-                                <h5 class="mb-0">Match Location</h5>
-                            </div>
-                            <div class="row">
-                                <p class="text-muted my-0">
+                            <div class="row mb-3">
+                                <div class="col-sm-2">
+                                    <h5 class="mb-0">Match Location</h5>
+                                </div>
+                                <div class="col">
                                     <div class="form-group">
-                                        <select name="locationDropdown" class="form-control" data-live-search="true">
-                                            <option>Add New Location</option>
-                                            <option selected>{{current_user.age_group}}</option>                                                
-                                            {% for i in locations %}
-                                                <option>{{i.location}}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <p class="text-muted mb-0">
-                                            <input name="location" class="form-control" placeholder="Other"/>
-                                        </p>
-                                    </div>
-                                </p>
+                                    <input class="form-control" list="datalistLocations" name="location" placeholder="{{match.location.location}}">
+                                    <datalist id="datalistLocations">
+                                        {% for i in locations %}
+                                            <option>{{i.location}}</option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
                             </div>
-                            <hr class="mt-0">
-                            <div class="row">
-                                <div class="col-sm-3">
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-sm-2">
                                     <h5 class="mb-0">Tag</h5>
                                 </div>
-                                <!-- naredi isto kokr location sam za tag -->
+                                <div class="col">
+                                    <input class="form-control" list="datalistTags" name="tag" placeholder="{{match.tag.tag}}">
+                                    <datalist id="datalistTags">
+                                        {% for i in tags %}
+                                        <option>{{i.tag}}</option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
                             </div>
-                            <hr class="mt-0">
-                            <div class="row">
-                                <div class="col-sm-1">
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-sm-2">
                                     <h5 class="mb-0">Sets</h5>
                                 </div>
-                                <div class="col-sm-11">
+                                <div class="col">
                                     <select name="sets" class="form-control">
                                         <option selected>{{match.setiCount}}</option>
                                         {% if match.setiCount == 3 %}

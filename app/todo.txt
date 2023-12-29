@@ -1,5 +1,3 @@
-pastmatches.html une slikice za sort sprement (narjen sam uredit je treba)
-import/export the results
 frontpage not logged in
 - bottom about us etc
 - un text umes
@@ -7,7 +5,11 @@ frontpage not logged in
 logged in frontpage
 - boljsi opis friends(also add friends)
 
-import/export
+V DOKUMENTACIJO DODEJ WERKZEUG.SECURE_FILENAME AND OS (ZA PR IMPORTU)
+
+made by spela delete
+
+currentmatch & edit kadar so seti 5
 
 landing page change name & sign up instead of submit & clean it up ffs
 add sign up to log in

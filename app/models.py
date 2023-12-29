@@ -22,8 +22,8 @@ class Friendship(db.Model):
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120), index=True, unique=True, nullable=False)
+    username = db.Column(db.String(32), nullable=False)
+    email = db.Column(db.String(320), index=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     join_date = db.Column(db.DateTime(timezone=True), default=datetime.now)
     experience = db.Column(db.String(12))
@@ -82,7 +82,6 @@ class User(db.Model, UserMixin):
 
 class FriendRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     requester = db.Column(db.Integer)
     requested = db.Column(db.Integer)
@@ -92,11 +91,8 @@ class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     unique = db.Column(db.String(10), nullable=False)
     notes = db.Column(db.Text())
-    timeSuggestion = db.Column(db.String(60))
-    timeConfirmA = db.Column(db.Boolean)
-    timeConfirmB = db.Column(db.Boolean)
     setiCount = db.Column(db.Integer)
-    matchDate = db.Column(db.DateTime(timezone=True))
+    date = db.Column(db.DateTime(timezone=True))
     finished = db.Column(db.Boolean)
     confirmA = db.Column(db.Boolean)
     confirmB = db.Column(db.Boolean)
@@ -155,7 +151,7 @@ class Invite(db.Model):
 
 class Set(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # actually score1 and score2, to get winner just check which one is bigger
+
     scoreA = db.Column(db.Integer)
     scoreB = db.Column(db.Integer)
 

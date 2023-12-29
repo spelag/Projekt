@@ -16,7 +16,7 @@
                                     class="rounded-circle img-fluid" style="width: 150px;">
                                 <h5 class="my-3">{{User.query.get(match.friendship.friendA).username}} vs {{User.query.get(match.friendship.friendB).username}}</h5>
                                 <p class="text-muted mb-1">Match date:</p>
-                                <p class="text-muted mb-4">{{match.matchDate.day}}. {{match.matchDate.month}}. {{match.matchDate.year}}</p>
+                                <p class="text-muted mb-4">{{match.date.day}}. {{match.date.month}}. {{match.date.year}}</p>
                                 <div class="d-flex justify-content-center mb-2">
                                     {% if match.winner == user.username %}
                                         <a type="button" class="btn btn-danger" href="{{url_for('newMatch', opponent=User.query.filter(User.username == match.loser).first().id)}}">Rematch</a>

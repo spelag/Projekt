@@ -8,6 +8,8 @@ from string import ascii_letters
 from flask_socketio import join_room, leave_room, send, emit
 from datetime import datetime
 import csv
+from werkzeug.utils import secure_filename
+import os
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -111,11 +113,9 @@ def generate_unique_code(length):
         code = ""
         for i in range(length):
             code += random.choice(ascii_letters)
-        if code not in matches:
+        if Match.query.filter(Match.unique == code).first() == None:
             break
     return code
-
-matches = []
 
 @app.route('/match/<matchID>/<unique>')
 @login_required
@@ -185,21 +185,24 @@ def checkIfReady(matchID):
     return False
 
 # triggered when a user joins
-# saves the room to session, and adds it to readyUsers if not already there
-# adds user to readyUsers and makes them join the room
-# checks if both opponents are present, if they are emits begin (game start)
-# emits join to change the waiting for text
 @socketio.on('join')
 def join(data):
+    # the row in the Match table associated with current match; data["room"] is the match's id
     match = Match.query.get(data["room"])
+    # saves the room to session, and adds it to readyUsers if not already there
     session['room'] = data["room"]
+    # adds user to readyUsers
     if data["room"] not in readyUsers:
         readyUsers[data["room"]] = []
     readyUsers[data["room"]].append(data["user"])
+    # joins user to the room
     join_room(data["room"])
+    # tells other spectators that the user has joined
     emit('join', {"readyUsers": readyUsers[data["room"]]}, room=data["room"])
+    # checks if both opponents are present, if they are emits begin (game start)
     if checkIfReady(data["room"]):
         setCount = match.setCount()
+        # if an ongoing set doesn't exist, create new set
         if len(match.sets) == 0 or match.sets[-1].winner != None:
             set = Set()
             set.scoreA = 0
@@ -208,19 +211,19 @@ def join(data):
             db.session.add(set)
             db.session.commit()
         emit('begin', {"score1": match.sets[-1].scoreA, "score2": match.sets[-1].scoreB, "set1": setCount[0], "set2": setCount[1]}, room=data["room"])
-    print(readyUsers)
 
 # triggered when a user disconnects
-# makes the user leave the room and removes the user id from readyUsers for their room
-# if room is empty, it gets deleted
-# emits unjoin to change waiting for text
 @socketio.on('disconnect')
 def disconnect():
     room = session.get('room')
     session.pop("room")
+    # removes the user id from readyUsers for their room
     readyUsers[room].remove(str(current_user.id))
+    # tells other users who is still present
     emit('unjoin', {"readyUsers": readyUsers[room]}, room=room)
+    # makes the user leave the room
     leave_room(room)
+    # if room is empty, it gets deleted
     if len(readyUsers[room]) == 0:
         del readyUsers[room]
 
@@ -258,27 +261,44 @@ def newMatch(opponent):
         return redirect(session['url'])
     return redirect(url_for('invites'))
 
+# accepts a match request
+# deletes the invite and creates a new match
 @app.route('/acceptmatch/<inviter>')
 @login_required
 def acceptMatch(inviter):
+    # current_user is the invitee, so the inviter is current_user's opponent
     opponent = User.query.get(inviter)
+    # the invite that is to be accepted
     invite = Invite.query.filter(Invite.invitee==current_user.id, Invite.inviter==opponent.id).first()
-    friendship = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id), or_(Friendship.friendA==opponent.id, Friendship.friendB==opponent.id)).first()
 
+    # if such an invite doesn't exist or current_user is not its recipient (invitee) the invite shouldn't be accepted so the user is redirected to the homepage/landing page
     if invite == None or current_user.id != invite.invitee:
         return redirect(url_for('index'))
 
-    unique = generate_unique_code(10)
-    matches.append(unique)
+    # the friendship between the current_user and opponent i.e. the inviter and invitee
+    friendship = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id), or_(Friendship.friendA==opponent.id, Friendship.friendB==opponent.id)).first()
+
+    # create a match
     match = Match()
+    unique = generate_unique_code(10)
     match.unique = unique
     match.finished = False
     match.setiCount = 3
+    match.location = Location.query.filter(Location.location == "None").first()
+    match.tag = Tag.query.filter(Tag.tag == "Untagged").first()
     db.session.add(match)
+    # connect the match to the friendship
     friendship.matches.append(match)
+    # delete the invite
     db.session.delete(invite)
-    createNotification(opponent, current_user.username + " has accepted your match invite.", "inv")
     db.session.commit()
+
+    # notify the opponent (inviter) that the match invite has been accepted
+    createNotification(opponent, current_user.username + " has accepted your match invite.", "inv")
+
+    # return current_user to the url they came from or if it is not stored in session, to the match they have just accepted
+    if 'url' in session:
+        return redirect(session['url'])
     return redirect(url_for('oneMatch', id=match.id))
 
 @app.route('/pastmatches')
@@ -286,7 +306,7 @@ def acceptMatch(inviter):
 def pastmatches():
     session['url'] = url_for('pastmatches')
 
-    d = (Match.query.filter(or_(Match.winner==current_user.id, Match.loser==current_user.id)).order_by(Match.matchDate.desc())).all()
+    d = (Match.query.filter(or_(Match.winner==current_user.id, Match.loser==current_user.id)).order_by(Match.date.desc())).all()
 
     return render_template('pastmatches.html', user=current_user, User=User, matches=d)
 
@@ -297,9 +317,9 @@ def pastmatchesSort(what, type):
     d = Match.query.filter(or_(Match.winner==current_user.id, Match.loser==current_user.id))
     if what == "date":
         if type == "desc":
-            d = d.order_by(Match.matchDate.desc())
+            d = d.order_by(Match.date.desc())
         elif type == "incr":
-            d = d.order_by(Match.matchDate)
+            d = d.order_by(Match.date)
     # elif what == "winner":
         # if type == "desc":
         #     d = d.order_by((User.query.get(Match.winner))).all()
@@ -311,15 +331,85 @@ def pastmatchesSort(what, type):
 @app.route('/pastmatches/export')
 @login_required
 def export():
-    matches = Match.query.filter(or_(Match.winner == current_user.username, Match.loser == current_user.username))
-    with open('export.csv', 'w') as csvfile:
+    matches = Match.query.filter(or_(Match.winner == current_user.id, Match.loser == current_user.id)).all()
+    print(matches)
+    with open('export.csv', 'w', newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["winner", "loser", "sets", "winnerSet", "loserSet", "winnerPoints1", "winnerPoints2", "winnerPoints3", "loserPoints1", "loserPoints2", "loserPoints3", "date"])
+        writer.writerow(["winner", "loser", "notes", "date", "setiCount", "location", "tag"])
+        writer.writerow(["scoreA", "scoreB", "winner", "loser"])
         for m in matches:
-            writer.writerow([m.winner, m.loser, m.sets, m.setResults[0], m.setResults[1], m.winnerPoints[:2], m.winnerPoints[2:4], m.winnerPoints[4:], m.loserPoints[:2], m.loserPoints[2:4], m.loserPoints[4:], m.matchDate])
+            writer.writerow([m.winner, m.loser, m.notes, m.date, m.setiCount, m.location.id, m.tag.id])
+            for s in m.sets:
+                writer.writerow([s.scoreA, s.scoreB, s.winner, s.loser])
 
     fName = current_user.username + 'PingPongerExport.csv'
     return send_file('../export.csv', mimetype='type/csv', download_name=fName, as_attachment=True)
+
+ALLOWED_EXTENSIONS = {'csv'}
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/pastmatches/import', methods=['POST'])
+@login_required
+def importMatch():
+    if 'file' not in request.files:
+        flash('No file part')
+        if 'url' in session:
+            return redirect(session['url'])
+        return redirect(url_for('pastmatches'))
+    file = request.files['file']
+    if file.filename == '':
+        flash('No selected file')
+        if 'url' in session:
+            return redirect(session['url'])
+        return redirect(url_for('pastmatches'))
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        with open(filepath, 'r') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)
+            next(reader)
+            while True:
+                try:
+                    row = next(reader)
+                except StopIteration:
+                    break
+                match = Match()
+                match.finished = True
+                match.unique = generate_unique_code(10)
+                match.winner = int(row[0])
+                match.loser = int(row[1])
+                match.notes = row[2]
+                # match.date = (row[3])
+                match.setiCount = int(row[4])
+                match.location = Location.query.get(row[5])
+                match.tag = Tag.query.get(row[6])
+                friendship = Friendship.query.filter(or_(Friendship.friendA==match.winner, Friendship.friendB==match.winner), or_(Friendship.friendA==match.loser, Friendship.friendB==match.loser)).first()
+                match.friendship = friendship
+                db.session.add(match)
+                for i in range(int(row[4])):
+                    curSet = next(reader)
+                    nSet = Set()
+                    nSet.scoreA = int(curSet[0])
+                    nSet.scoreB = int(curSet[1])
+                    nSet.winner = int(curSet[2])
+                    nSet.loser = int(curSet[3])
+                    nSet.match = match
+                    db.session.add(nSet)
+                db.session.commit()
+    else:
+        flash('Only CSV files can be uploaded.')
+        if 'url' in session:
+            return redirect(session['url'])
+        return redirect(url_for('pastmatches'))
+    if 'url' in session:
+        return redirect(session['url'])
+    return redirect(url_for('pastmatches'))
+    # fName = current_user.username + 'PingPongerExport.csv'
+    # return send_file('../export.csv', mimetype='type/csv', download_name=fName, as_attachment=True)
 
 @app.route('/match/<id>')
 @login_required
@@ -440,26 +530,31 @@ def editMatch(matchID):
     if match == None:
         return redirect(url_for('index'))
     if match.finished:
-        return redirect(url_for('oneMatch'), id=match.id)
+        return redirect(url_for('oneMatch', id=match.id))
     if request.method == "GET":
         locations = Location.query.order_by(Location.location).all()
-        return render_template('editCurrentmatch.html', locations=locations, match=match, u1=User.query.get(match.friendship.friendA), u2=User.query.get(match.friendship.friendB))
+        tags = Tag.query.order_by(Tag.tag).all()
+        return render_template('editCurrentmatch.html', locations=locations, tags=tags, match=match, u1=User.query.get(match.friendship.friendA), u2=User.query.get(match.friendship.friendB))
     match.confirmA = False
     match.confirmB = False
     info = request.form
     # change location
-    if info['locationDropdown'] == "Add New Location":
+    if info['location'] != "":
         loc = Location.query.filter_by(location=info['location']).first()
-        if loc == None:
+        if not loc:
             loc = Location()
             loc.location = info['location']
             db.session.add(loc)
         match.location = loc
-    else:
-        match.location = Location.query.filter_by(location=info['locationDropdown']).first()
-    match.tag
+    if info['tag'] != "":
+        tag = Tag.query.filter_by(tag=info['tag']).first()
+        if not tag:
+            tag = Tag()
+            tag.tag = info['tag']
+            db.session.add(tag)
+        match.tag = tag
     match.notes = info['note']
-    match.timeSuggestion
+    match.date
     db.session.commit()
     if current_user == match.friendship.friendA:
         createNotification(User.query.get(match.friendship.friendB), current_user.username + " has edited your current match data.", "mat")
