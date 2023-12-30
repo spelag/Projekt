@@ -8,54 +8,54 @@
     <section style="background-color: #eee;">
         <div class="container py-5">
             <div class="row">
-                <form class="col-lg-12" id="settings" action="/editmatch/{{match.id}}" method="post">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-sm text-center">
-                                    <h5 class="mb-0">Results</h5>
-                                </div>
-                            </div>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form id="settings" action="/editmatch/{{match.id}}" method="post">
                             <div class="container">
                                 <div class="row">
+                                    <div class="col-sm text-center">
+                                        <h5 class="mb-0">Results</h5>
+                                    </div>
+                                </div>
+                                <div class="row">
                                     {% for i in range(match.setiCount) %}
-                                        {% if i < match.sets|length %}
-                                            <div class="col-sm-4">
-                                                <div class="container">
-                                                    <div class="row">
-                                                        <p class="mb-0 text-center">Set {{i+1}}</p>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-sm">
-                                                            <p class="mb-0 text-center">{{u1.username}}</p>
-                                                            <input name="setA{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreL}}"/>
-                                                        </div>
-                                                        <div class="col-sm">
-                                                            <p class="mb-0 text-center">{{u2.username}}</p>
-                                                            <input name="setB{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreB}}"/>
-                                                        </div>
-                                                    </div>
+                                    {% if i < match.sets|length %}
+                                    <div class="col-sm-4">
+                                        <div class="container">
+                                            <div class="row">
+                                                <p class="mb-0 text-center">Set {{i+1}}</p>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm">
+                                                    <p class="mb-0 text-center">{{u1.username}}</p>
+                                                    <input name="setA{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreL}}"/>
+                                                </div>
+                                                <div class="col-sm">
+                                                    <p class="mb-0 text-center">{{u2.username}}</p>
+                                                    <input name="setB{{i}}" type="number" class="form-control" placeholder="{{match.sets[i].scoreB}}"/>
                                                 </div>
                                             </div>
-                                        {% else %}
-                                            <div class="col-sm-4">
-                                                <div class="container">
-                                                    <div class="row">
-                                                        <p class="mb-0 text-center">Set {{i+1}}</p>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-sm">
-                                                            <p class="mb-0 text-center">{{u1.username}}</p>
-                                                            <input name="setA{{i}}" type="number" class="form-control" placeholder="0"/>
-                                                        </div>
-                                                        <div class="col-sm">
-                                                            <p class="mb-0 text-center">{{u2.username}}</p>
-                                                            <input name="setB{{i}}" type="number" class="form-control" placeholder="0"/>
-                                                        </div>
-                                                    </div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="col-sm-4">
+                                        <div class="container">
+                                            <div class="row">
+                                                <p class="mb-0 text-center">Set {{i+1}}</p>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-sm">
+                                                    <p class="mb-0 text-center">{{u1.username}}</p>
+                                                    <input name="setA{{i}}" type="number" class="form-control" placeholder="0"/>
+                                                </div>
+                                                <div class="col-sm">
+                                                    <p class="mb-0 text-center">{{u2.username}}</p>
+                                                    <input name="setB{{i}}" type="number" class="form-control" placeholder="0"/>
                                                 </div>
                                             </div>
-                                        {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
@@ -65,13 +65,26 @@
                                     <h5 class="mb-0">Match Location</h5>
                                 </div>
                                 <div class="col">
-                                    <div class="form-group">
                                     <input class="form-control" list="datalistLocations" name="location" placeholder="{{match.location.location}}">
                                     <datalist id="datalistLocations">
                                         {% for i in locations %}
-                                            <option>{{i.location}}</option>
+                                        <option>{{i.location}}</option>
                                         {% endfor %}
                                     </datalist>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row mb-3">
+                                <div class="col-sm-2">
+                                    <h5 class="mb-0">Match Date</h5>
+                                </div>
+                                <div class="col form-floating datetimepicker">
+                                    <input type="date" name="date" class="form-control" value="{{match.date.year}}-{{match.date.month}}-{{match.date.day}}" id="datepicker">
+                                    <label for="datepicker" class="form-label">Select Date</label>
+                                </div>
+                                <div class="col form-floating datetimepicker">
+                                    <input type="time" name="time" class="form-control" value="{{match.date.hour}}:{{match.date.minute}}" id="timepicker">
+                                    <label for="timepicker" class="form-label">Select Time</label>
                                 </div>
                             </div>
                             <hr>
@@ -116,19 +129,18 @@
                                         </div>
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-3 mb-3">
-                            <button type="submit" form="settings" class="btn btn-danger">Save</button>
-                        </div>
-                    </div>
-                    <div class="alert alert-warning" role="alert" data-mdb-color="warning">
-                        <i class="fa fa-exclamation-triangle"></i>
-                        Your opponent will also be able to see any changes you make.
+                        </form>
                     </div>
                 </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3 mb-3">
+                    <button type="submit" form="settings" class="btn btn-danger">Save</button>
+                </div>
+            </div>
+            <div class="row alert alert-warning" role="alert" data-mdb-color="warning">
+                <i class="fa fa-exclamation-triangle"></i>
+                Your opponent will also be able to see any changes you make.
             </div>
         </div>
     </section>

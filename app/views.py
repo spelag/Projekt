@@ -400,6 +400,7 @@ def importMatch():
                     nSet.match = match
                     db.session.add(nSet)
                 db.session.commit()
+        os.remove(filepath)
     else:
         flash('Only CSV files can be uploaded.')
         if 'url' in session:
@@ -554,7 +555,13 @@ def editMatch(matchID):
             db.session.add(tag)
         match.tag = tag
     match.notes = info['note']
-    match.date
+    date = info['date']
+    time = info['time']
+    if info['time'] == "":
+        time = datetime.today().strftime('%H:%M')
+    if info['date'] == "":
+        date = datetime.today().strftime('%Y-%m-%d')
+    match.date = datetime.strptime(date + " " + time,"%Y-%m-%d %H:%M")
     db.session.commit()
     if current_user == match.friendship.friendA:
         createNotification(User.query.get(match.friendship.friendB), current_user.username + " has edited your current match data.", "mat")
