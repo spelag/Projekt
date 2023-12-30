@@ -89,7 +89,9 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <p class="text-muted mb-0">
+                                            {% if match.date != None %}
                                             {{match.date.hour}}:{{match.date.minute}} {{match.date.day}}/{{match.date.month}}/{{match.date.year}}
+                                            {% endif %}
                                         </p>
                                     </div>
                                 </div>

@@ -36,7 +36,10 @@ def index():
         for i in temp:
             if i.friendship.friendA==current_user.id or i.friendship.friendB==current_user.id:
                 matches.append(i)
-        return render_template('loggedinHomepage.html', User=User, matches=matches, length=len(matches))
+        wins = Match.query.filter(Match.winner==current_user.id).all()
+        losses = Match.query.filter(Match.loser==current_user.id).all()
+        invites = current_user.get_inboundInvites()
+        return render_template('loggedinHomepage.html', User=User, Invite=Invite, matches=matches, invites=invites, wins=len(wins), losses=len(losses))
     return render_template('homepage.html')
 
 @app.route('/login')
@@ -149,6 +152,7 @@ def score(data):
             if match.setiCount == len(match.sets):
                 match.confirmA = False
                 match.confirmB = False
+                match.date = datetime.today()
                 emit('redirect', {"url": url_for('oneMatch', id=data["room"])}, room=data["room"])
             else:
                 newSet = Set()
@@ -171,12 +175,12 @@ def score(data):
 
 readyUsers = {}
 
-@socketio.on('setiChange')
-def setiChange(data):
-    if str(data['matchID']) in readyUsers:
-        readyUsers.pop(data["matchID"])
-        readyUsers[data["matchID"]] = []
-    emit('setiChange', data, room=data['matchID'])
+# @socketio.on('setiChange')
+# def setiChange(data):
+#     if str(data['matchID']) in readyUsers:
+#         readyUsers.pop(data["matchID"])
+#         readyUsers[data["matchID"]] = []
+#     emit('setiChange', data, room=data['matchID'])
 
 def checkIfReady(matchID):
     match = Match.query.get(matchID)
@@ -227,9 +231,9 @@ def disconnect():
     if len(readyUsers[room]) == 0:
         del readyUsers[room]
 
-@socketio.on('changeResult')
-def changeResult(data):
-    emit('changeResult', room=data["matchID"])
+# @socketio.on('changeResult')
+# def changeResult(data):
+#     emit('changeResult', room=data["matchID"])
     # return redirect(url_for('chat', matchID=match.id, unique=unique))
 
 @app.route('/newmatch/<opponent>')
@@ -470,6 +474,10 @@ def invites():
 @login_required
 def declineInvite(invite):
     invite = Invite.query.get(invite)
+    if not invite:
+        if 'url' in session:
+            return redirect(session['url'])
+        return redirect(url_for('index'))
     createNotification(User.query.get(invite.inviter), User.query.get(invite.invitee).username + " has declined your invite to a match.", "inv")
     db.session.delete(invite)
     db.session.commit()
@@ -711,12 +719,17 @@ def friendRequest(friendName, friendID):
 
 @app.route('/removerequest/<friendID>')
 def removeRequest(friendID):
-    if FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first():
-        db.session.delete(FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first())
+    req = FriendRequest.query.filter_by(requester=current_user.id, requested=friendID).first()
+    if req:
+        db.session.delete(req)
     else:
-        db.session.delete(FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first())
-        createNotification(User.query.get(friendID), current_user.username + " has rejected your friend request.", "fri")
+        req = FriendRequest.query.filter_by(requested=current_user.id, requester=friendID).first()
+        if req:
+            db.session.delete(req)
+            createNotification(User.query.get(friendID), current_user.username + " has rejected your friend request.", "fri")
     db.session.commit()
+    if 'url' in session:
+        return redirect(session['url'])
     return redirect(url_for('allusers', who="friendrequests"))
 
 @app.route('/addfriend/<friendName>/<friendID>')

@@ -27,22 +27,7 @@
         document.querySelector('#addU2').disabled = true
         document.querySelector('#subtractU1').disabled = true
         document.querySelector('#subtractU2').disabled = true
-        document.querySelector('#addsetU1').disabled = true
-        document.querySelector('#addsetU2').disabled = true
-        document.querySelector('#subtractsetU1').disabled = true
-        document.querySelector('#subtractsetU2').disabled = true
     })
-    
-    // socket.on('disconnect', () => {
-    //     console.log('torej to se pokaze')
-    //     socket.emit('leave', {"room": matchID, "user": current_user})
-    //     // document.querySelector("#top").innerHTML = `<h1>Results confirmed and saved.</h1>`
-    //     // document.querySelector('#u1scoreSet').style.display = "none"
-    //     // document.querySelector('#u2scoreSet').style.display = "none"
-    //     // document.querySelector("#u1").style.display = "none"
-    //     // document.querySelector("#u2").style.display = "none"
-    //     // document.querySelector("#iks").style.visibility = "hidden"
-    // })
 
     // with both users there, the match begins
     socket.on('begin', data => {
@@ -54,18 +39,10 @@
         document.querySelector('#addU2').style.display = "block"
         document.querySelector('#subtractU1').style.display = "block"
         document.querySelector('#subtractU2').style.display = "block"
-        document.querySelector('#addsetU1').style.display = "block"
-        document.querySelector('#addsetU2').style.display = "block"
-        document.querySelector('#subtractsetU1').style.display = "block"
-        document.querySelector('#subtractsetU2').style.display = "block"
         document.querySelector('#addU1').disabled = false
         document.querySelector('#addU2').disabled = false
         document.querySelector('#subtractU1').disabled = false
         document.querySelector('#subtractU2').disabled = false
-        document.querySelector('#addsetU1').disabled = false
-        document.querySelector('#addsetU2').disabled = false
-        document.querySelector('#subtractsetU1').disabled = false
-        document.querySelector('#subtractsetU2').disabled = false
         document.querySelector('#turn1').style.visibility = "visible"
         turn = "1"
         serva = 0
@@ -160,19 +137,6 @@
     };
     document.querySelector('#subtractU2').onclick = () => {
         socket.emit('score', {"who": "1", "what": "minus", "room":matchID});
-    };
-
-    document.querySelector('#addsetU1').onclick = () => {
-        socket.emit('setAdjust', {"who": "0", "what": "plus", "room":matchID, "0": parseInt(document.querySelector('#u1scoreSet').innerHTML), "1": parseInt(document.querySelector('#u2scoreSet').innerHTML)});
-    };
-    document.querySelector('#addsetU2').onclick = () => {
-        socket.emit('setAdjust', {"who": "1", "what": "plus", "room":matchID, "0": parseInt(document.querySelector('#u1scoreSet').innerHTML), "1": parseInt(document.querySelector('#u2scoreSet').innerHTML)});
-    };
-    document.querySelector('#subtractsetU1').onclick = () => {
-        socket.emit('setAdjust', {"who": "0", "what": "minus", "room":matchID, "0": parseInt(document.querySelector('#u1scoreSet').innerHTML), "1": parseInt(document.querySelector('#u2scoreSet').innerHTML)});
-    };
-    document.querySelector('#subtractsetU2').onclick = () => {
-        socket.emit('setAdjust', {"who": "1", "what": "minus", "room":matchID, "0": parseInt(document.querySelector('#u1scoreSet').innerHTML), "1": parseInt(document.querySelector('#u2scoreSet').innerHTML)});
     };
 
     document.querySelector("#seti").addEventListener("change", function() {
