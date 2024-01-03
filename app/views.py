@@ -520,15 +520,16 @@ def editProfile():
     current_user.age_group = info['age']
     current_user.experience = info['experience']
     # changing location
-    prev = current_user.location
-    if prev != None:
-        prev.users.remove(current_user)
-    loc = Location.query.filter_by(location=info['location']).first()
-    if loc == None:
-        loc = Location()
-        loc.location = info['location']
-        db.session.add(loc)
-    loc.users.append(current_user)
+    if info['location'] != "":
+        prev = current_user.location
+        if prev != None:
+            prev.users.remove(current_user)
+        loc = Location.query.filter_by(location=info['location']).first()
+        if loc == None:
+            loc = Location()
+            loc.location = info['location']
+            db.session.add(loc)
+        loc.users.append(current_user)
     db.session.commit()
     return redirect(url_for('profile', username=current_user.username, userID=current_user.id))
 
