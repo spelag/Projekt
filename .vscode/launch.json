@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/kapit/Desktop",
-      "program": "c:/Users/kapit/Desktop/build/Debug/outDebug",
+      "cwd": "c:/Users/kapit/Desktop/programiranje/2024",
+      "program": "c:/Users/kapit/Desktop/programiranje/2024/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
