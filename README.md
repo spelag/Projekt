@@ -4,6 +4,10 @@
 
 PingPonger is a website for keeping track of your table tennis games.
 
+## To run
+- Activate venv by "venv\Scripts\activate"
+- Run by "py run.py"
+
 ## Hints
 - To play a match go to /members/friends and select the friend you wish to play against.
 - To add new friends, send out invites to users at /members/all or accept incoming friend requests at /members/friendrequests
