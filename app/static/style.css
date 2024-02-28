@@ -20,7 +20,7 @@ div {
 
 .my-custom-scrollbar {
   position: relative;
-  height: 400px;
+  height: 200px;
   overflow: auto;
   }
 .table-wrapper-scroll-y {

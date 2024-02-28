@@ -332,21 +332,27 @@ def pastmatchesSort(what, type):
     d = d.all()
     return render_template('pastmatches.html', user=current_user, User=User, matches=d)
 
+# exports all past matches
 @app.route('/pastmatches/export')
 @login_required
 def export():
+    # makes a list of all matches the player has played saved in the database
     matches = Match.query.filter(or_(Match.winner == current_user.id, Match.loser == current_user.id)).all()
-    print(matches)
+    # creates a csv file to export the matches in
     with open('export.csv', 'w', newline="") as csvfile:
         writer = csv.writer(csvfile)
+        # writes header into the file
         writer.writerow(["winner", "loser", "notes", "date", "setiCount", "location", "tag"])
         writer.writerow(["scoreA", "scoreB", "winner", "loser"])
+        # writes each match into the file
         for m in matches:
             writer.writerow([m.winner, m.loser, m.notes, m.date, m.setiCount, m.location.id, m.tag.id])
             for s in m.sets:
                 writer.writerow([s.scoreA, s.scoreB, s.winner, s.loser])
 
+    # the name the file will be exported under
     fName = current_user.username + 'PingPongerExport.csv'
+    # sends the file to be downloaded by the user
     return send_file('../export.csv', mimetype='type/csv', download_name=fName, as_attachment=True)
 
 ALLOWED_EXTENSIONS = {'csv'}
@@ -357,45 +363,80 @@ def allowed_file(filename):
 @app.route('/pastmatches/import', methods=['POST'])
 @login_required
 def importMatch():
+    # make sure a file was posted
     if 'file' not in request.files:
         flash('No file part')
         if 'url' in session:
             return redirect(session['url'])
         return redirect(url_for('pastmatches'))
+
     file = request.files['file']
+    # make sure a file had been selected
     if file.filename == '':
         flash('No selected file')
         if 'url' in session:
             return redirect(session['url'])
         return redirect(url_for('pastmatches'))
+    # make sure that the file is allowed (only CSV allowed currently)
     if file and allowed_file(file.filename):
+        # saves the file into static/imports
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
+        # open the file to be parsed through
         with open(filepath, 'r') as csvfile:
             reader = csv.reader(csvfile)
+            # skip the header
             next(reader)
             next(reader)
             while True:
+                # if the file has another row save it as row, otherwise break out of the while loop
                 try:
                     row = next(reader)
                 except StopIteration:
                     break
+                # create a new Match instance
                 match = Match()
+                # assign the match defult values
                 match.finished = True
                 match.unique = generate_unique_code(10)
+                # assign the match values according to the CSV file data
                 match.winner = int(row[0])
                 match.loser = int(row[1])
                 match.notes = row[2]
-                # match.date = (row[3])
                 match.setiCount = int(row[4])
-                match.location = Location.query.get(row[5])
-                match.tag = Tag.query.get(row[6])
+                # save date in the datetime format
+                try:
+                    match.date = datetime.strptime(row[3], '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    match.date = None
+                # if there is a location given it is connected to the match. a new location is made in the case that it doesn't exist yet
+                if row[5] != "":
+                    loc = Location.query.get(row[5])
+                    if loc == None:
+                        loc = Location()
+                        loc.location = row[5]
+                        db.session.add(loc)
+                    match.location = loc
+                # same as location, but for tag
+                if row[6] != "":
+                    tag = Tag.query.get(row[6])
+                    if tag == None:
+                        tag = Tag()
+                        tag.tag = row[6]
+                        db.session.add(tag)
+                    match.tag = tag
+                # if a friendship is found, it is linked to the match
                 friendship = Friendship.query.filter(or_(Friendship.friendA==match.winner, Friendship.friendB==match.winner), or_(Friendship.friendA==match.loser, Friendship.friendB==match.loser)).first()
-                match.friendship = friendship
+                if friendship:
+                    match.friendship = friendship
+                # the match is added to the database
                 db.session.add(match)
+                # here, each set is added seperately
                 for i in range(int(row[4])):
+                    # holds the row with the set that is being added
                     curSet = next(reader)
+                    # creates a new set and sets its values
                     nSet = Set()
                     nSet.scoreA = int(curSet[0])
                     nSet.scoreB = int(curSet[1])
@@ -403,9 +444,11 @@ def importMatch():
                     nSet.loser = int(curSet[3])
                     nSet.match = match
                     db.session.add(nSet)
+                # finally, the match has all the data, the changes are commited to the database
                 db.session.commit()
         os.remove(filepath)
     else:
+        # the user is informed in case they try to upload a non-CSV file
         flash('Only CSV files can be uploaded.')
         if 'url' in session:
             return redirect(session['url'])
@@ -413,8 +456,6 @@ def importMatch():
     if 'url' in session:
         return redirect(session['url'])
     return redirect(url_for('pastmatches'))
-    # fName = current_user.username + 'PingPongerExport.csv'
-    # return send_file('../export.csv', mimetype='type/csv', download_name=fName, as_attachment=True)
 
 @app.route('/match/<id>')
 @login_required

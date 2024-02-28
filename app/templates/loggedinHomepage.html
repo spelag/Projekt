@@ -7,9 +7,51 @@
 {% block content %}
 <!-- Page Content-->
 <div class="container">
-    <!-- Heading Row-->
     <div class="row justify-content-around my-5">
-        <div class="col-lg-3">
+        <div class="col-lg-2">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="btn btn-outline-primary" href="{{url_for('allusers', who='friends')}}">
+                        <h4 class="card-title">
+                            Friends
+                            <svg data-bs-toggle="tooltip" data-bs-placement="right"
+                                data-bs-title="Here you can see all your friends. Invite your friends to a match and use the chat function to settle on a date and location. Start the match and record your score."
+                                xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+                            </svg>
+                        </h4>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-primary" href="{{url_for('invites')}}">
+                        <h4 class="card-title">
+                            Match Invites
+                            <svg data-bs-toggle="tooltip" data-bs-placement="right"
+                                data-bs-title="See the invites your friends have sent you. Cancel any outbound invites you have sent if you don't wish to play anymore."
+                                xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+                            </svg>
+                        </h4>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-primary" href="{{url_for('pastmatches')}}">
+                        <h4 class="card-title">
+                            Past Matches
+                            <svg data-bs-toggle="tooltip" data-bs-placement="right"
+                                data-bs-title="See the details of all your past matches."
+                                xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286m1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94"/>
+                            </svg>
+                        </h4>
+                    </a>
+                </li>
+              </ul>
+        </div>
+        <div class="col-lg-4">
             {% if wins+losses == 0 %}
             <img class="img-fluid rounded mb-4 mb-lg-0" height="100px" src="/static/img/loparja.png" alt="..." />
             {% else %}
@@ -121,6 +163,7 @@
                         </table>
                         {% endif %}
                     </div>
+                <!-- </div> -->
             </div>
         </div>
         <!-- Place for general description/any special notices (eg. maintenence) -->
@@ -131,37 +174,8 @@
                 </div>
             </div>
         </div>
-        <!-- Content Row-->
-        <div class="row justify-content-center gx-4 gx-lg-5">
-            <div class="col-md-4 mb-5">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h2 class="card-title">Friends</h2>
-                        <p class="card-text">Here you can see all your friends. Invite your friends to a match and use the chat function to settle on a date and location. Start the match and record your score.</p>
-                    </div>
-                    <div class="card-footer"><a class="btn btn-primary btn-sm" href="/members/friends">More Info</a></div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-5">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h2 class="card-title">Match Invites</h2>
-                        <p class="card-text">See the invites your friends have sent you. Cancel any outbound invites you have sent if you don't wish to play anymore.</p>
-                    </div>
-                    <div class="card-footer"><a class="btn btn-primary btn-sm" href="/invites">More Info</a></div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-5">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h2 class="card-title">Past Matches</h2>
-                        <p class="card-text">See the details of all your past matches.</p>
-                    </div>
-                    <div class="card-footer"><a class="btn btn-primary btn-sm" href="/pastmatches">More Info</a></div>
-                </div>
-            </div>
-        </div>
     </div>
+
     <!-- Core theme JS-->
     <script src="js/scripts.js"></script>
     <script>
@@ -186,5 +200,12 @@
         };
     
         new Chart('test2', config2)
+    </script>
+
+    <script>
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
     </script>
 {% endblock %}
