@@ -275,12 +275,13 @@ def acceptMatch(inviter):
     # the invite that is to be accepted
     invite = Invite.query.filter(Invite.invitee==current_user.id, Invite.inviter==opponent.id).first()
 
-    # if such an invite doesn't exist or current_user is not its recipient (invitee) the invite shouldn't be accepted so the user is redirected to the homepage/landing page
+    # make sure an invite exists and current_user is the invitee
     if invite == None or current_user.id != invite.invitee:
         return redirect(url_for('index'))
 
     # the friendship between the current_user and opponent i.e. the inviter and invitee
-    friendship = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id), or_(Friendship.friendA==opponent.id, Friendship.friendB==opponent.id)).first()
+    friendship = Friendship.query.filter(or_(Friendship.friendA==current_user.id, Friendship.friendB==current_user.id),
+                                         or_(Friendship.friendA==opponent.id, Friendship.friendB==opponent.id)).first()
 
     # create a match
     match = Match()
@@ -427,7 +428,8 @@ def importMatch():
                         db.session.add(tag)
                     match.tag = tag
                 # if a friendship is found, it is linked to the match
-                friendship = Friendship.query.filter(or_(Friendship.friendA==match.winner, Friendship.friendB==match.winner), or_(Friendship.friendA==match.loser, Friendship.friendB==match.loser)).first()
+                friendship = Friendship.query.filter(or_(Friendship.friendA==match.winner, Friendship.friendB==match.winner),
+                                                     or_(Friendship.friendA==match.loser, Friendship.friendB==match.loser)).first()
                 if friendship:
                     match.friendship = friendship
                 # the match is added to the database
