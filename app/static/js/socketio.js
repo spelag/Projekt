@@ -43,7 +43,7 @@
         document.querySelector('#addU2').disabled = false
         document.querySelector('#subtractU1').disabled = false
         document.querySelector('#subtractU2').disabled = false
-        document.querySelector('#turn1').style.visibility = "visible"
+        // document.querySelector('#turn1').style.visibility = "visible"
         turn = "1"
         serva = 0
         u1points = 0
@@ -92,16 +92,16 @@
             if (confirm(data["winner"] + " won! Result: " + data["u1score"] + ":" + data["u2score"])) {
                 socket.emit('finalize', {"user": current_user, "what": "ok", "room": matchID})
                 document.querySelector("#top").innerHTML = `<h1>Waiting for opponent to confirm the results...</h1>`
-                document.querySelector('#turn1').style.visibility = "visible"
-                document.querySelector('#turn2').style.visibility = "visible"
+                // document.querySelector('#turn1').style.visibility = "visible"
+                // document.querySelector('#turn2').style.visibility = "visible"
                 document.querySelector('#addU1').style.display = "none"
                 document.querySelector('#addU2').style.display = "none"
                 document.querySelector('#subtractU1').style.display = "none"
                 document.querySelector('#subtractU2').style.display = "none"
                 document.querySelector('#u1score').style.display = "none"
                 document.querySelector('#u2score').style.display = "none"
-                document.querySelector('#turn1').style.visibility = "hidden"
-                document.querySelector('#turn2').style.visibility = "hidden"
+                // document.querySelector('#turn1').style.visibility = "hidden"
+                // document.querySelector('#turn2').style.visibility = "hidden"
                 // document.querySelector('#confirm').style.display = "block"
             }
             else {

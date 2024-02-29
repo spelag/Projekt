@@ -662,6 +662,7 @@ def editMatch(matchID):
             else:
                 flash("You entered an imposible score.")
                 return redirect(url_for('oneMatch', id=match.id))
+    match.setiCount = info['sets']
     db.session.commit()
     return redirect(url_for('oneMatch', id=match.id))
 
