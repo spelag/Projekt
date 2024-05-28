@@ -1,6 +1,6 @@
 from app import app, db, socketio
 from flask import render_template, request, redirect, url_for, jsonify, flash, send_file, session
-from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, Set, Notification, login_manager
+from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, Set, Notification, Klub, Turnir, Skupina, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from sqlalchemy import text, update, select, or_
 import random
@@ -694,6 +694,7 @@ def matchConfirm(matchID):
 @app.route('/statistics')
 @login_required
 def statistics():
+    session['url'] = url_for('statistics')
     scores = []
     labels = []
     sets = Set.query.filter(or_(Set.winner==current_user.id, Set.loser==current_user.id)).all()
@@ -812,3 +813,64 @@ def removeFriend(friendName, friendID):
     if 'url' in session:
         return redirect(session['url'])
     return redirect(url_for('profile', username=friendName, userID=friendID))
+
+@app.route('/klub')
+@login_required
+def klub():
+    session['url'] = url_for('klub')
+    if not current_user.klub:
+        if current_user.is_admin:
+            return render_template('makeklub.html')
+        return render_template('notyetklub.html')
+    return render_template('klub.html')
+
+@app.route('/makeklub', methods=['POST'])
+@login_required
+def makeklub():
+    name = request.form.get('name')
+    if not name:
+        flash("Klub mora imeti ime.")
+        return redirect(url_for('klub'))
+    klub = Klub(
+        name = name,
+        admin = current_user.id
+    )
+    loc = request.form.get('location')
+    if loc:
+        location = Location.query.filter(Location.location==loc).first()
+        if not location:
+            location = Location()
+            location.location = loc
+            db.session.add(location)
+        klub.location = location
+    current_user.klub = klub
+    db.session.commit()
+    if 'url' in session:
+        return redirect(session['url'])
+    return redirect(url_for('klub'))
+
+@app.route('/admin', methods=['POST'])
+@login_required
+def admin():
+    if request.form.get('data') == "admin":
+        current_user.is_admin = True
+        db.session.commit()
+        return "true"
+    else:
+        return "false"
+
+@app.route('/addmembers', methods=['GET', 'POST'])
+@login_required
+def addmembers():
+    if request.method == 'POST':
+        for i in current_user.klub.members:
+            if current_user.id != i.id:
+                i.klub = None
+        for i in request.form:
+            user = User.query.get(int(i))
+            if not user.klub:
+                user.klub = current_user.klub
+        db.session.commit()
+        return redirect(url_for('klub'))
+    return render_template('addmembers.html', users=User.query.all())
+

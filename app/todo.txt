@@ -1,8 +1,6 @@
 logged in frontpage
 - boljsi opis friends(also add friends)
 
-V DOKUMENTACIJO DODEJ WERKZEUG.SECURE_FILENAME AND OS (ZA PR IMPORTU)
-
 currentmatch & edit kadar so seti 5
 socketio flowcharts
 

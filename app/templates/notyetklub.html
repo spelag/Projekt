@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Klub{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}Klub{% endblock %}
+{% block content %}
+    <div class="container-fluid p-3">
+        <div class="row d-flex justify-content-evenly">
+            <div class="col-md-5 text-center">
+                <h1>Niste še del nobenega kluba.</h1>
+                <p>Če ste član kluba stopite v stik z vodjo in z njim delite elektronski naslov s katerim ste se registrirali.</p>
+                <p>Če ste vodja kluba in bi želeli ustvariti klub na PingPongerju nas kontaktirajte za geslo za dostop do admin pravic. Nato ga vnesite <a class="link-primary" onclick="admin()">tukaj</a>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function admin() {
+            let value = prompt("Vnesite admin kodo");
+            $.ajax({ 
+                url: '/admin', 
+                type: 'POST', 
+                data: { 'data': value }, 
+                success: function(response) {
+                    if (response == "false")
+                    {
+                        window.alert("Neveljavna koda.");
+                    }
+                    else
+                    {
+                        window.location = "/klub";
+                    }
+                },
+                error: function(error) { 
+                    console.log(error); 
+                } 
+            }); 
+        }
+    </script>
+{% endblock %}

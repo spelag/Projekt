@@ -28,6 +28,7 @@ class User(db.Model, UserMixin):
     join_date = db.Column(db.DateTime(timezone=True), default=datetime.now)
     experience = db.Column(db.String(12))
     age_group = db.Column(db.String(6))
+    is_admin = db.Column(db.Boolean, default=0)
 
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     location = db.relationship('Location', back_populates='users')
@@ -36,6 +37,11 @@ class User(db.Model, UserMixin):
     # inboundInvites = db.relationship('Match', back_populates='invitee', lazy=True)
     # outboundInvites = db.relationship('Match', back_populates='inviter', lazy=True)
     notifications = db.Relationship('Notification', back_populates='user', order_by='Notification.id.desc()')
+
+    klub_id = db.Column(db.Integer, db.ForeignKey('klubs.id'))
+    klub = db.relationship('Klub', back_populates='members')
+
+    skupinas = db.relationship('Skupina', secondary = 'skupina_user', back_populates='members')
 
     def get_friends(self):
         friends = []
@@ -101,7 +107,11 @@ class Match(db.Model):
     friendship_id = db.Column(db.Integer, db.ForeignKey('friendships.id'))
     tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'))
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
-    
+    skupina_id = db.Column(db.Integer, db.ForeignKey('skupinas.id'))
+
+    # skupina v turnirju if applicable
+    skupina = db.relationship('Skupina', back_populates='matches')
+
     # the two friends playing the match
     friendship = db.relationship('Friendship', back_populates='matches')
 
@@ -143,6 +153,7 @@ class Location(db.Model):
 
     users = db.relationship('User', back_populates='location')
     matches = db.relationship('Match', back_populates='location')
+    klubs = db.relationship('Klub', back_populates='location')
 
 class Invite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -169,3 +180,44 @@ class Notification(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', back_populates='notifications')
+
+class Klub(db.Model):
+    __tablename__ = 'klubs'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(32), nullable=False)
+    admin = db.Column(db.Integer, nullable=False)
+
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
+    location = db.relationship('Location', back_populates='klubs')
+
+    members = db.Relationship('User', back_populates='klub')
+    turnirs = db.Relationship('Turnir', back_populates='klub')
+
+class Turnir(db.Model):
+    __tablename__ = 'turnirs'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(32), nullable=False)
+    ongoing = db.Column(db.Boolean)
+
+    skupinas = db.Relationship('Skupina', back_populates='turnir')
+
+    klub_id = db.Column(db.Integer, db.ForeignKey('klubs.id'))
+    klub = db.relationship('Klub', back_populates='turnirs')
+
+class Skupina(db.Model):
+    __tablename__ = 'skupinas'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(32), nullable=False)
+
+    members = db.Relationship('User', secondary='skupina_user', back_populates='skupinas')
+
+    matches = db.Relationship('Match', back_populates='skupina')
+
+    turnir_id = db.Column(db.Integer, db.ForeignKey('turnirs.id'))
+    turnir = db.relationship('Turnir', back_populates='skupinas')
+
+skupina_user = db.Table(
+    'skupina_user',
+    db.Column('skupina_id', db.Integer, db.ForeignKey('skupinas.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'))
+)
