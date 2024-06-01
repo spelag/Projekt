@@ -109,9 +109,6 @@ class Match(db.Model):
     location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     skupina_id = db.Column(db.Integer, db.ForeignKey('skupinas.id'))
 
-    # skupina v turnirju if applicable
-    skupina = db.relationship('Skupina', back_populates='matches')
-
     # the two friends playing the match
     friendship = db.relationship('Friendship', back_populates='matches')
 
@@ -127,6 +124,9 @@ class Match(db.Model):
 
     # the sets played within this match
     sets = db.relationship('Set', back_populates='match', lazy=True)
+
+    # skupina v turnirju if applicable
+    skupina = db.relationship('Skupina', back_populates='matches')
 
     def setCount(self):
         set1 = 0
@@ -196,8 +196,10 @@ class Klub(db.Model):
 class Turnir(db.Model):
     __tablename__ = 'turnirs'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(32), nullable=False)
-    ongoing = db.Column(db.Boolean)
+    name = db.Column(db.String(32), nullable=False, unique=True)
+    description = db.Column(db.String(320), nullable=False)
+    type = db.Column(db.String(3), nullable=False)
+    ongoing = db.Column(db.Boolean, default=1)
 
     skupinas = db.Relationship('Skupina', back_populates='turnir')
 

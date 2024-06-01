@@ -2,7 +2,7 @@ from app import app, db, socketio
 from flask import render_template, request, redirect, url_for, jsonify, flash, send_file, session
 from app.models import User, FriendRequest, Friendship, Match, Invite, Location, Tag, Set, Notification, Klub, Turnir, Skupina, login_manager
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from sqlalchemy import text, update, select, or_
+from sqlalchemy import text, update, select, or_, and_
 import random
 from string import ascii_letters
 from flask_socketio import join_room, leave_room, send, emit
@@ -874,3 +874,96 @@ def addmembers():
         return redirect(url_for('klub'))
     return render_template('addmembers.html', users=User.query.all())
 
+@app.route('/maketournament', methods=['GET', 'POST'])
+@login_required
+def maketournament():
+    if request.method == 'POST':
+        req = request.get_json()
+        turnir = Turnir(
+            name = req['name'],
+            klub = current_user.klub,
+            type = req['type'],
+            description = req['desc']
+        )
+        db.session.add(turnir)
+        for i in req['skupine']:
+            skupina = Skupina(
+                name = i,
+                turnir = turnir
+            )
+            db.session.add(skupina)
+        db.session.commit()
+        return jsonify({"exists": "true"})
+    return render_template('maketournament.html', members=current_user.klub.members, User=User)
+
+@app.route('/maketournament/choosemembers', methods=['POST'])
+@login_required
+def maketournamentMembers():
+    req = request.get_json()
+    turnir = Turnir.query.filter_by(name=req['turnir']).first()
+    skupine = req['skupine']
+    print(skupine)
+    members = current_user.klub.members
+    print(members)
+    for i in range(len(turnir.skupinas)):
+        for j in skupine[i]:
+            print(turnir.skupinas[i].members)
+            for k in turnir.skupinas[i].members:
+                print(k.id)
+                print(members[j].id)
+                friendship = Friendship.query.filter(Friendship.friendA == members[j].id, Friendship.friendB == k.id).all() + Friendship.query.filter(Friendship.friendB == members[j].id, Friendship.friendA == k.id).all()
+                if not friendship:
+                    friendship = Friendship(
+                        friendA = members[j].id,
+                        friendB = k.id
+                    )
+                    db.session.add(friendship)
+                else:
+                    friendship = friendship[0]
+                match = Match(
+                    unique = generate_unique_code(10),
+                    finished = False,
+                    setiCount = 3,
+                    location = turnir.klub.location,
+                    tag = Tag.query.get(1),
+                    friendship = friendship,
+                    skupina = turnir.skupinas[i]
+                )
+                db.session.add(match)
+            members[j].skupinas.append(turnir.skupinas[i])
+    db.session.commit()
+    return jsonify({"turnirId": turnir.id})
+    if request.method == "POST":
+        emailAdd = request.get_json()['email']
+        if User.query.filter_by(email=emailAdd).first():
+            return jsonify({"user_exists": "true"})
+        else:
+            return jsonify({"user_exists": "false"})
+
+@app.route('/validate-tournament', methods=['POST'])
+@login_required
+def validatetournament():
+    if request.method == "POST":
+        turnir = request.get_json()['turnir']
+        if Turnir.query.filter(Turnir.name==turnir, Turnir.klub==current_user.klub).first():
+            return jsonify({"exists": "true"})
+        else:
+            return jsonify({"exists": "false"})
+
+@app.route('/tournament/<id>')
+@login_required
+def tournament(id):
+    turnir = Turnir.query.get(id)
+    print(turnir.id)
+    skupina = Skupina.query.filter(Skupina.turnir_id == id).first()
+    print(Match.query.filter(or_(Match.friendship.has(friendA = current_user.id), Match.friendship.has(friendB = current_user.id))).first())
+    todo = Match.query.filter(Match.skupina_id == skupina.id, or_(Match.friendship.has(friendA = current_user.id), Match.friendship.has(friendB = current_user.id))).all()
+    toplay = []
+    played = []
+    print(todo)
+    for i in todo:
+        if i.finished:
+            played.append(i)
+        else:
+            toplay.append(i)
+    return render_template('tournament.html', turnir=turnir, odigrani=played, leftover=toplay)

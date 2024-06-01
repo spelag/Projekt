@@ -15,7 +15,7 @@
         {% if current_user.is_admin %}
             <div class="row d-flex justify-content-evenly">
                 <div class="col-md-5 text-center">
-                    <a class="btn btn-primary">Ustvari Turnir</a>
+                    <a href="{{url_for('maketournament')}}" class="btn btn-primary">Ustvari Turnir</a>
                     <a href="{{url_for('addmembers')}}" class="btn btn-primary">Dodaj Člane</a>
                 </div>
             </div>
@@ -38,14 +38,14 @@
                             <tbody>
                                 {% for i in current_user.klub.turnirs %}
                                     <tr>
-                                        <th scope="row">{{i.username}}</th>
+                                        <th scope="row">{{i.name}}</th>
                                         {% if i.ongoing %}
                                             <td>Ja</td>
                                         {% else %}
                                             <td>Ne</td>
                                         {% endif %}
                                         <td>{{i.skupinas|length}}</td>
-                                        <td><a>...</a></td>
+                                        <td><a href="/tournament/{{i.id}}">...</a></td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

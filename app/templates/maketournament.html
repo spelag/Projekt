@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Turnir{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block pagetitle %}Ustvari Turnir{% endblock %}
+{% block content %}
+    <div class="container-fluid p-3">
+        <div class="row d-flex justify-content-evenly">
+            <div class="col-md-5 text-center">
+                <h1>Ustvarite nov turnir.</h1>
+            </div>
+        </div>
+    </div>
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <div class="row">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Ime turnirja</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <input class="form-control" id="name" name="name" type="text" autofocus>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Opis</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <input class="form-control" id="desc" type="text">
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                            <p class="mb-0">Število skupin</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <input id="stSkupin" type="number" class="form-control" placeholder="1">
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p class="mb-0">Vrsta turnirja</p>
+                            </div>
+                            <div class="col-sm-3 form-check">
+                                <input class="form-check-input" type="radio" name="vrsta" id="1x1" checked>
+                                <label class="form-check-label" for="1x1">
+                                1x1
+                                </label>
+                            </div>
+                            <div class="col-sm-3 form-check">
+                                <input class="form-check-input" type="radio" name="vrsta" id="2x2">
+                                <label class="form-check-label" for="2x2">
+                                2x2
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="skupine" style="display: none; padding: 0px">
+                    <div id="1" class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">Ime skupine</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <input class="form-control" name="imeSkupin">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tabela" class="card mb-4" style="display: none">
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                            <tr id="skupinaNames">
+                                <th>Član</th>
+                                <th>Ne tekmuje</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(members|length) %}
+                                        <tr class="skupinaRadios">
+                                            <th scope="row">{{members[i].username}}</th>
+                                            <th scope="row"><input class="form-check-input none" name="member{{i}}" type="radio" id='none{{i}}' checked></th>
+                                        </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="column">
+                    <button type="button" id="nada" onclick="nadaljuj()" class="btn btn-primary btn-block mb-4">Nadaljuj</button>
+                </div>
+                <div class="alert alert-warning" role="alert" data-mdb-color="warning">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    Teh podatkov ne bo mogoče spremeniti. Preverite, ali so pravilni.
+                </div>
+                <div class="column">
+                    <button onclick="nadaljuj3()" id="ustvariTurnir" style="display: none" class="btn btn-primary btn-block mb-4">Ustvari Turnir</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+        const collection = [];
+
+        function validateStSkupin() {
+            const input = document.getElementById('stSkupin');
+            if (input.value < 1 && input.value != "")
+            {
+                input.setCustomValidity("Število skupin mora biti pozitivno.");
+                input.reportValidity();
+                return true;
+            }
+            return false;
+        }
+
+        function checkIfTurnirExists() {
+            const turnir = document.getElementById('name');
+            axios.post('/validate-tournament', {
+                turnir: turnir.value
+            })
+            .then((response) => {
+                if (response.data.exists == "true") {
+                    turnir.setCustomValidity("Turnir s tem imenom že obstaja.");
+                    turnir.reportValidity();
+                }
+                else {
+                    turnir.setCustomValidity("");
+                    turnir.reportValidity();
+                }
+            }, (error) => {
+                console.log(error)
+            })
+        }
+
+        function nadaljuj() {
+            let name = document.getElementById('name');
+            if (name.value == "")
+            {
+                name.setCustomValidity("Turnir mora imeti ime.");
+                name.reportValidity();
+                return;
+            }
+            if (validateStSkupin())
+            {
+                return;
+            }
+            checkIfTurnirExists()
+            if (name.reportValidity() == false) {
+                return;
+            }
+            name.readOnly = true;
+            document.getElementById('desc').readOnly = true;
+            document.getElementById('1x1').disabled = true;
+            document.getElementById('2x2').disabled = true;
+            let stSkupin = document.getElementById('stSkupin');
+            stSkupin.readOnly = true;
+            skupine = document.getElementById('skupine');
+            skupine.style.display = "block";
+            for (let i = 0; i < stSkupin.value - 1; i++)
+            {
+                skupine.innerHTML += '<div id=' + (i+2) + ' class="card mb-4">' + document.getElementById('1').innerHTML + "</div>";
+            }
+            document.getElementById('nada').onclick = nadaljuj2;
+        }
+
+        function nadaljuj2()
+        {
+            let stSkupin = document.getElementById('stSkupin');
+            if (stSkupin.value == "")
+            {
+                stSkupin.value = stSkupin.placeholder;
+            }
+            skupinaNames = document.getElementById('skupinaNames');
+            skupinaRadios = document.getElementsByClassName('skupinaRadios');
+            for (let i = 0; i < stSkupin.value; i++) {
+                collection.push(document.getElementById(i+1).childNodes[1].childNodes[1].childNodes[3].childNodes[1]);
+                if (collection[i].value == "") {
+                    collection[i].setCustomValidity("Skupina mora imeti ime.");
+                    collection[i].reportValidity();
+                    return
+                }
+                collection[i].readOnly = true;
+                collection[i] = collection[i].value;
+                skupinaNames.innerHTML += "<th>" + collection[i] + "</th>";
+                for (let j = 0; j < skupinaRadios.length; j++) {
+                    skupinaRadios[j].innerHTML += '<th><input class="form-check-input ' + collection[i] + '" name="member' + j + '" type="radio" id=' + collection[i] + j + '></th>';
+                }
+            }
+            let type = "";
+            if (document.getElementById('1x1').checked)
+            {
+                type = "1x1";
+            }
+            else if (document.getElementById('2x2').checked) {
+                type = "2x2";
+            }
+            document.getElementById('tabela').style.display = "block";
+            document.getElementById('ustvariTurnir').style.display = "block";
+            document.getElementById('nada').style.display = "none";
+            axios.post('/maketournament', {
+                skupine: collection,
+                stSkupin: stSkupin.value,
+                name: document.getElementById('name').value,
+                type: type,
+                desc: document.getElementById('desc').value
+            })
+            .then((response) => {
+                console.log(response)
+            }, (error) => {
+                console.log(error)
+            })
+        }
+        function nadaljuj3() {
+            let skupinaRadios = document.getElementsByClassName('skupinaRadios');
+            const skupine = [];
+            for (let i = 0; i < collection.length; i++) {
+                const clani = []
+                const list = document.getElementsByClassName(collection[i]);
+                for (let j = 0; j < list.length; j++) {
+                    if (list[j].checked)
+                    {
+                        clani.push(j);
+                    }
+                }
+                skupine.push(clani);
+            }
+            console.log(skupine);
+            axios.post('/maketournament/choosemembers', {
+                skupine: skupine,
+                turnir: document.getElementById('name').value
+            })
+            .then((response) => {
+                window.location = '/tournament/' + response.data.turnirId;
+            }, (error) => {
+                console.log(error)
+            })
+        }
+        document.getElementById("stSkupin").addEventListener("focusout", validateStSkupin);
+        document.getElementById("name").addEventListener("focusout", checkIfTurnirExists);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        input.form-control:read-only {
+            background-color: #efefef ;
+        }
+    </style>
+{% endblock %}
